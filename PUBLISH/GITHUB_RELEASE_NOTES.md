@@ -10,7 +10,7 @@ Tag `v0.2.0` is already pushed. To publish the release page:
 
 ---
 
-## Farlands Reforged 0.2.0 (alpha)
+## Farlands Reforged 0.2.0
 
 Restores the classic **Far Lands** — the chaotic, stretched terrain from old Minecraft — by preserving full
 coordinate precision in Minecraft's Perlin-noise wrapping. For **Fabric** and **NeoForge**.

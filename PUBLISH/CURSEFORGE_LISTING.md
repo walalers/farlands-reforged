@@ -86,8 +86,8 @@ Perlin-noise precision wrapping. Respect to the old noise ghosts.
 
 ## 4) Upload the files — settings per jar
 
-Upload each jar from the `jars/` folder as a **separate file**. Set **Release type = Alpha** on all
-(version is 0.2.0 / alpha). **Java = 25** on all. **No required dependencies on any** (do NOT add Fabric API).
+Upload each jar from the `jars/` folder as a **separate file**. Set **Release type = Release** on all.
+**Java = 25** on all. **No required dependencies on any** (do NOT add Fabric API).
 
 | File | Game Version | Modloader |
 |------|--------------|-----------|
@@ -108,7 +108,7 @@ Upload each jar from the `jars/` folder as a **separate file**. Set **Release ty
 ## 5) Changelog (paste into each file's changelog box)
 
 ```
-Farlands Reforged 0.2.0 (alpha)
+Farlands Reforged 0.2.0
 
 - Restores classic Far Lands-style terrain generation by preserving full Perlin-noise coordinate precision.
 - Adds the /farlands command (threshold + distance readout, set/reset with game-master permission).
