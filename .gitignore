@@ -1,0 +1,29 @@
+# Gradle
+.gradle/
+build/
+**/build/
+**/.gradle/
+
+# Loom / NeoForge generated run + caches
+run/
+**/run/
+*.classpath
+*.project
+bin/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Gradle wrapper jar is kept intentionally (needed to build):
+!gradle/wrapper/gradle-wrapper.jar

@@ -1,0 +1,12 @@
+# Normalize text line endings in the repo; check out native on each OS.
+* text=auto
+
+# Binary assets — never apply line-ending or text conversion (would corrupt them).
+*.jar binary
+*.zip binary
+*.png binary
+*.tiny -text
+
+# Treat the Gradle wrapper as binary.
+gradlew text eol=lf
+*.bat text eol=crlf

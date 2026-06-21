@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.shigeo.farlandsreforged.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "minVersion": "0.8",
+  "mixins": [
+    "PerlinNoiseMixin"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

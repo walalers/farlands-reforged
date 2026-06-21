@@ -1,0 +1,18 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = 'https://maven.neoforged.net/releases' }
+    }
+}
+
+dependencyResolutionManagement {
+    // ModDevGradle adds Mojang/NeoForge repositories itself; project repos must remain allowed.
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+    repositories {
+        mavenCentral()
+        maven { url = 'https://maven.neoforged.net/releases' }
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    }
+}
+
+rootProject.name = 'farlands-reforged-26.2'
