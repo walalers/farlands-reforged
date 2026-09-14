@@ -12,6 +12,7 @@ public final class FarlandsReforged {
 
     public FarlandsReforged(IEventBus modEventBus, ModContainer modContainer) {
         modContainer.registerConfig(ModConfig.Type.COMMON, FarlandsConfig.SPEC);
+        modEventBus.addListener(FarlandsConfig::onConfigEvent);
         NeoForge.EVENT_BUS.addListener(FarlandsCommands::register);
         NeoForge.EVENT_BUS.addListener(FarlandsEvents::onPlayerTick);
     }

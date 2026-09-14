@@ -1,5 +1,6 @@
 package com.shigeo.farlandsreforged;
 
+import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class FarlandsConfig {
@@ -25,7 +26,7 @@ public final class FarlandsConfig {
                 .define("enableWhereAmIAdvancement", true);
         FARLANDS_START_COORDINATE = builder
                 .comment("Classic Far Lands threshold used by /farlands and the advancement detector.",
-                        "The terrain effect itself is intentionally kept vanilla-authentic; changing this value does not move the real Far Lands noise behavior.",
+                        "The terrain effect itself always breaks down at the classic 12,550,821 like Beta did; changing this value does not move the real Far Lands.",
                         "Classic value: 12550821")
                 .defineInRange("farlandsStartCoordinate", CLASSIC_FARLANDS_START, MIN_START, MAX_START);
         builder.pop();
@@ -33,10 +34,20 @@ public final class FarlandsConfig {
         SPEC = builder.build();
     }
 
+    /** Cached because the terrain mixins read it inside the hottest world-generation loops. */
+    private static volatile boolean terrainEnabled = true;
+
     private FarlandsConfig() {}
 
     public static boolean terrainEnabled() {
-        return safeBoolean(ENABLE_TERRAIN, true);
+        return terrainEnabled;
+    }
+
+    /** Mod-bus listener: refreshes the cached toggles whenever this config is loaded or reloaded. */
+    public static void onConfigEvent(ModConfigEvent event) {
+        if (event.getConfig().getSpec() == SPEC) {
+            terrainEnabled = safeBoolean(ENABLE_TERRAIN, true);
+        }
     }
 
     public static boolean advancementEnabled() {

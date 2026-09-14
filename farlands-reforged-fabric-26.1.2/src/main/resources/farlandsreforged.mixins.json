@@ -4,7 +4,11 @@
   "package": "com.shigeo.farlandsreforged.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "PerlinNoiseMixin",
+    "BlendedNoiseMixin",
+    "ImprovedNoiseMixin",
+    "RangeChoiceMixin",
+    "SurfaceRulesContextMixin",
+    "NoiseBasedAquiferMixin",
     "CommandsMixin",
     "ServerPlayerMixin"
   ],

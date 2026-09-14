@@ -19,6 +19,8 @@ public final class FarlandsConfig {
     private static final String ENABLE_ADVANCEMENT = "enableWhereAmIAdvancement";
     private static final String FARLANDS_START = "farlandsStartCoordinate";
     private static Path configPath;
+    /** Cached because the terrain mixins read it inside the hottest world-generation loops. */
+    private static volatile boolean terrainEnabled = true;
 
     private FarlandsConfig() {}
 
@@ -36,7 +38,7 @@ public final class FarlandsConfig {
     }
 
     public static boolean terrainEnabled() {
-        return Boolean.parseBoolean(PROPERTIES.getProperty(ENABLE_TERRAIN, "true"));
+        return terrainEnabled;
     }
 
     public static boolean advancementEnabled() {
@@ -68,6 +70,7 @@ public final class FarlandsConfig {
         PROPERTIES.putIfAbsent(ENABLE_ADVANCEMENT, "true");
         long clamped = Math.max(MIN_START, Math.min(MAX_START, farlandsStartCoordinate()));
         PROPERTIES.setProperty(FARLANDS_START, Long.toString(clamped));
+        terrainEnabled = Boolean.parseBoolean(PROPERTIES.getProperty(ENABLE_TERRAIN, "true"));
         save();
     }
 
@@ -86,7 +89,7 @@ public final class FarlandsConfig {
         try {
             Files.createDirectories(configPath.getParent());
             try (OutputStream output = Files.newOutputStream(configPath)) {
-                PROPERTIES.store(output, "Farlands Reforged Fabric config. The threshold controls /farlands and the advancement; terrain remains classic-authentic.");
+                PROPERTIES.store(output, "Farlands Reforged Fabric config. enableFarlandsTerrain toggles the authentic Far Lands; the threshold only controls /farlands and the advancement.");
             }
         } catch (IOException ignored) {
             // Keep running with in-memory defaults. A config file is useful, not worth crashing the game over.

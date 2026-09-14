@@ -2,7 +2,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-jar = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('build/libs/farlandsreforged-0.2.0+mc26.1.2-neoforge.jar')
+jar = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('build/libs/farlandsreforged-0.3.0+mc26.1.2-neoforge.jar')
 mc_artifact = Path('build/moddev/artifacts/minecraft-patched-26.1.2.76.jar')
 required_entries = {
     'META-INF/neoforge.mods.toml',
@@ -11,7 +11,12 @@ required_entries = {
     'com/shigeo/farlandsreforged/FarlandsConfig.class',
     'com/shigeo/farlandsreforged/FarlandsCommands.class',
     'com/shigeo/farlandsreforged/FarlandsEvents.class',
-    'com/shigeo/farlandsreforged/mixin/PerlinNoiseMixin.class',
+    'com/shigeo/farlandsreforged/FarlandsRegion.class',
+    'com/shigeo/farlandsreforged/mixin/BlendedNoiseMixin.class',
+    'com/shigeo/farlandsreforged/mixin/ImprovedNoiseMixin.class',
+    'com/shigeo/farlandsreforged/mixin/RangeChoiceMixin.class',
+    'com/shigeo/farlandsreforged/mixin/SurfaceRulesContextMixin.class',
+    'com/shigeo/farlandsreforged/mixin/NoiseBasedAquiferMixin.class',
     'data/farlandsreforged/advancement/farlands/where_am_i.json',
     'assets/farlandsreforged/lang/en_us.json',
 }
@@ -33,11 +38,13 @@ with zipfile.ZipFile(jar) as zf:
 
 expected_text = [
     'modId = "farlandsreforged"',
-    'version = "0.2.0+mc26.1.2-neoforge"',
+    'version = "0.3.0+mc26.1.2-neoforge"',
     'versionRange = "[26.1.2,26.2)"',
     'Inspired by AdyTech99',
     'config = "farlandsreforged.mixins.json"',
-    'PerlinNoiseMixin',
+    'BlendedNoiseMixin',
+    'RangeChoiceMixin',
+    'NoiseBasedAquiferMixin',
     'JAVA_25',
     '"trigger": "minecraft:impossible"',
     '"...where am I?"',
@@ -49,9 +56,22 @@ if missing_text:
     raise SystemExit('Missing expected metadata/data text: ' + ', '.join(missing_text))
 
 if mc_artifact.exists():
+    # Every class the terrain mixins hook, with a member each one relies on.
+    mixin_targets = {
+        'net/minecraft/world/level/levelgen/synth/BlendedNoise.class': [b'wrap', b'compute'],
+        'net/minecraft/world/level/levelgen/synth/ImprovedNoise.class': [b'floor', b'noise'],
+        'net/minecraft/world/level/levelgen/DensityFunctions$RangeChoice.class': [b'whenInRange', b'fillArray'],
+        'net/minecraft/world/level/levelgen/SurfaceRules$Context.class': [b'getMinSurfaceLevel', b'blockX'],
+        'net/minecraft/world/level/levelgen/Aquifer$NoiseBasedAquifer.class': [b'computeSubstance', b'globalFluidPicker'],
+    }
     with zipfile.ZipFile(mc_artifact) as zf:
-        cls = zf.read('net/minecraft/world/level/levelgen/synth/PerlinNoise.class')
-    if b'wrap' not in cls or b'(D)D' not in cls:
-        raise SystemExit('Minecraft 26.1.2 PerlinNoise no longer appears to expose wrap(D)D; mixin target needs remapping.')
+        for cls_name, members in mixin_targets.items():
+            try:
+                cls = zf.read(cls_name)
+            except KeyError:
+                raise SystemExit(f'Minecraft no longer ships {cls_name}; mixin target needs remapping.')
+            for member in members:
+                if member not in cls:
+                    raise SystemExit(f'{cls_name} no longer references {member.decode()}; mixin target needs remapping.')
 
-print(f'OK: {jar} contains v0.2 NeoForge metadata, config/command/event classes, advancement, lang, and targets PerlinNoise.wrap(D)D.')
+print(f'OK: {jar} contains v0.3 NeoForge metadata, config/command/event classes, advancement, lang, and every terrain mixin target still exists.')

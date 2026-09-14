@@ -2,7 +2,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-jar = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('build/libs/farlandsreforged-0.2.0+mc26.1.2-fabric.jar')
+jar = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('build/libs/farlandsreforged-0.3.0+mc26.1.2-fabric.jar')
 required_entries = {
     'fabric.mod.json',
     'farlandsreforged.mixins.json',
@@ -10,7 +10,12 @@ required_entries = {
     'com/shigeo/farlandsreforged/FarlandsConfig.class',
     'com/shigeo/farlandsreforged/FarlandsCommands.class',
     'com/shigeo/farlandsreforged/FarlandsEvents.class',
-    'com/shigeo/farlandsreforged/mixin/PerlinNoiseMixin.class',
+    'com/shigeo/farlandsreforged/FarlandsRegion.class',
+    'com/shigeo/farlandsreforged/mixin/BlendedNoiseMixin.class',
+    'com/shigeo/farlandsreforged/mixin/ImprovedNoiseMixin.class',
+    'com/shigeo/farlandsreforged/mixin/RangeChoiceMixin.class',
+    'com/shigeo/farlandsreforged/mixin/SurfaceRulesContextMixin.class',
+    'com/shigeo/farlandsreforged/mixin/NoiseBasedAquiferMixin.class',
     'data/farlandsreforged/advancement/farlands/where_am_i.json',
     'assets/farlandsreforged/lang/en_us.json',
 }
@@ -27,10 +32,12 @@ with zipfile.ZipFile(jar) as zf:
     lang = zf.read('assets/farlandsreforged/lang/en_us.json').decode('utf-8')
 expected = [
     '"id": "farlandsreforged"',
-    '"version": "0.2.0+mc26.1.2-fabric"',
+    '"version": "0.3.0+mc26.1.2-fabric"',
     '"minecraft": ">=26.1.2 <26.2"',
     '"fabricloader": ">=0.19.0"',
-    'PerlinNoiseMixin',
+    'BlendedNoiseMixin',
+    'RangeChoiceMixin',
+    'NoiseBasedAquiferMixin',
     'JAVA_25',
     '"trigger": "minecraft:impossible"',
     '"...where am I?"',

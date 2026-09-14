@@ -1,6 +1,6 @@
 # Farlands Reforged
 
-A tiny NeoForge `26.2` mod that restores classic Far Lands-style terrain generation by preserving full coordinate precision in Minecraft's Perlin noise wrapping method.
+A tiny NeoForge `26.2` mod that restores the classic Far Lands: the legacy 3D terrain noise overflows exactly as it did in Beta 1.7.3, and the rest of world generation treats that broken noise the way the old generator did.
 
 ## Status
 
@@ -8,8 +8,9 @@ Alpha build target: Minecraft `26.2`, NeoForge `26.2.0.6-beta`.
 
 ## Features
 
-- Restores Far Lands-style terrain generation by preserving Perlin noise coordinate precision.
-- Keeps the default terrain behavior classic/authentic.
+- Restores the authentic Far Lands: stretched walls, stacked sheets and tunnels from ±12,550,821 on X and Z.
+- Grass and trees on top, grass and dirt on every ledge, tunnels flooded to sea level, like Beta 1.7.3.
+- Only the legacy 3D terrain noise breaks down; every other noise stays wrapped so nothing glitches early.
 - Adds a small advancement, `...where am I?`, when a player reaches the configured Far Lands threshold.
 - Adds `/farlands` for threshold/distance info and credits.
 - Adds server/common config toggles for terrain and the advancement detector.
@@ -22,7 +23,7 @@ Alpha build target: Minecraft `26.2`, NeoForge `26.2.0.6-beta`.
 /farlands reset
 ```
 
-`/farlands set` and `/farlands reset` require game master permissions. The threshold is used for the command readout and advancement detector; the actual terrain effect intentionally remains the classic coordinate-precision behavior.
+`/farlands set` and `/farlands reset` require game master permissions. The threshold is used for the command readout and advancement detector; the terrain itself always breaks down at the classic threshold, like Beta.
 
 ## Config
 
