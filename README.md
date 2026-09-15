@@ -90,7 +90,10 @@ Farlands Reforged does five small things to bring the original behavior back:
    the grassy, tree-covered top and the grass-and-dirt ledges Beta had.
 5. **Floods to sea level.** Modern aquifers treat anything below that preliminary surface as underground and hand
    out scattered pockets of water, lava and air. Inside the Far Lands the dimension's global fluid rule is used
-   instead: water up to sea level, exactly what Beta did.
+   instead: water up to sea level, exactly what Beta did. Beta had no deep lava layer or magma either, and in a
+   world flooded from bedrock up they are what freezes the server (water meeting lava, and bubble columns rising
+   from every flooded cave floor queue tens of thousands of block updates), so inside the Far Lands the lava layer
+   is water too and underwater magma is not placed.
 
 Set `enableFarlandsTerrain = false` to turn all five off and get vanilla generation.
 
@@ -129,7 +132,8 @@ the dependency version ranges, and `mod_version`), then rebuild.
 
 - **0.3.0** — Authentic Far Lands. Previous versions only unwrapped the noise, which in modern world generation
   produced a solid slab riddled with vanilla caves; this release restores the classic shapes, surface and water,
-  and stops the early mountain glitching at ±2.86 million.
+  and stops the early mountain glitching at ±2.86 million. Arriving in the Far Lands no longer stalls the server
+  (no lava layer or magma bubble columns under the flood). Fabric builds target Fabric Loader 0.19.5.
 - **0.2.0** — Initial public release: unwrapped Perlin noise, `/farlands`, config, advancement.
 
 ## Credits

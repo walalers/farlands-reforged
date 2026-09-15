@@ -1,19 +1,29 @@
-# GitHub Release v0.2.0 — paste-ready
+# GitHub Release v0.3.0 — paste-ready
 
-Tag `v0.2.0` is already pushed. To publish the release page:
+To publish the release page:
 
-1. Go to **https://github.com/walalers/farlands-reforged/releases/new?tag=v0.2.0**
-2. **Release title:** `Farlands Reforged 0.2.0`
+1. Go to **https://github.com/walalers/farlands-reforged/releases/new**, create tag `v0.3.0` on `main`.
+2. **Release title:** `Farlands Reforged 0.3.0`
 3. Paste the notes below into the description.
-4. Under **Attach binaries**, drag in all 8 jars from `PUBLISH\jars\`.
-5. Check **"Set as a pre-release"** (this is an alpha), then **Publish release**.
+4. Under **Attach binaries**, drag in the 8 `0.3.0` jars from `PUBLISH/jars/`.
+5. **Publish release**.
 
 ---
 
-## Farlands Reforged 0.2.0
+## Farlands Reforged 0.3.0 — Authentic Far Lands
 
-Restores the classic **Far Lands** — the chaotic, stretched terrain from old Minecraft — by preserving full
-coordinate precision in Minecraft's Perlin-noise wrapping. For **Fabric** and **NeoForge**.
+The Far Lands now look like the originals: stretched walls, stacked sheets and long tunnels on the Edge and
+Corner Far Lands, starting at ±12,550,821 on X and Z. For **Fabric** and **NeoForge**.
+
+### What's new
+- **Authentic shapes.** 0.2.0 only unwrapped the noise, which modern world generation turned into a solid slab
+  full of vanilla caves. 0.3.0 lets the legacy terrain noise overflow the way Beta 1.7.3's did and passes the
+  broken density through, so the walls, sheets and tunnels come back.
+- **Beta-style dressing.** Grass and trees on top, grass and dirt on every ledge, tunnels flooded to sea level.
+- **No early glitching.** Mountains stay normal until the real Far Lands (0.2.0 broke them at ±2.86 million).
+- **No freeze on arrival.** The flooded Far Lands no longer queue tens of thousands of water/lava and bubble
+  column updates, which stalled the server and left players looking at nothing.
+- Fabric builds target Fabric Loader 0.19.5.
 
 ### Supported versions
 | Minecraft | Fabric | NeoForge |
@@ -25,18 +35,16 @@ coordinate precision in Minecraft's Perlin-noise wrapping. For **Fabric** and **
 
 Requires **Java 25**. Fabric builds need only Fabric Loader — **Fabric API is not required**.
 
-### What's included
-- Authentic Far Lands terrain generation (Perlin-noise coordinate precision restored).
-- `/farlands` command — threshold + distance readout; `set`/`reset` with game-master permission.
-- Config toggles for the terrain effect and the advancement detector.
-- The `...where am I?` advancement when you reach the edge of sane terrain generation.
-
 ### Install
-Download the jar matching your **Minecraft version and loader**, drop it in your `mods/` folder.
+Download the jar matching your **Minecraft version and loader**, drop it in your `mods/` folder, and remove any
+older Farlands Reforged jar. Use a **new world** (or unexplored chunks) to see the new terrain.
 
 ### Reach the Far Lands
 ```
-/tp @s 12550821 120 0
+/tp @s 12550800 100 0
+/tp @s 0 100 12550800
+/tp @s -12550800 100 0
+/tp @s 12550900 100 12550900
 ```
 
 *Inspired by AdyTech99's MIT-licensed Farlands Reborn. MIT licensed. By Shigeo + Mob.*

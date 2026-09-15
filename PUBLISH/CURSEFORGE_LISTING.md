@@ -35,8 +35,9 @@ No new blocks, no resource pack, no fuss — just the classic terrain ghost, fai
 
 ## Features
 
-- **Authentic Far Lands generation** — restores the original stretched/distorted terrain by keeping the
-  Perlin-noise coordinate precision Mojang rounded off.
+- **Authentic Far Lands generation** — the stretched walls, stacked sheets and long tunnels of the Edge and
+  Corner Far Lands, starting at the classic ±12,550,821 on X and Z.
+- **Beta-style dressing** — grass and trees on top, grass and dirt on every ledge, tunnels flooded to sea level.
 - **Stays classic by default** — normal terrain everywhere else is untouched.
 - **`/farlands` command** — shows the Far Lands threshold and your distance from it, plus credits.
   `/farlands set <threshold>` and `/farlands reset` (game-master permission) tune the readout.
@@ -91,14 +92,14 @@ Upload each jar from the `jars/` folder as a **separate file**. Set **Release ty
 
 | File | Game Version | Modloader |
 |------|--------------|-----------|
-| `farlandsreforged-0.2.0+mc26.1-fabric.jar`     | 26.1   | Fabric   |
-| `farlandsreforged-0.2.0+mc26.1-neoforge.jar`   | 26.1   | NeoForge |
-| `farlandsreforged-0.2.0+mc26.1.1-fabric.jar`   | 26.1.1 | Fabric   |
-| `farlandsreforged-0.2.0+mc26.1.1-neoforge.jar` | 26.1.1 | NeoForge |
-| `farlandsreforged-0.2.0+mc26.1.2-fabric.jar`   | 26.1.2 | Fabric   |
-| `farlandsreforged-0.2.0+mc26.1.2-neoforge.jar` | 26.1.2 | NeoForge |
-| `farlandsreforged-0.2.0+mc26.2-fabric.jar`     | 26.2   | Fabric   |
-| `farlandsreforged-0.2.0+mc26.2-neoforge.jar`   | 26.2   | NeoForge |
+| `farlandsreforged-0.3.0+mc26.1-fabric.jar`     | 26.1   | Fabric   |
+| `farlandsreforged-0.3.0+mc26.1-neoforge.jar`   | 26.1   | NeoForge |
+| `farlandsreforged-0.3.0+mc26.1.1-fabric.jar`   | 26.1.1 | Fabric   |
+| `farlandsreforged-0.3.0+mc26.1.1-neoforge.jar` | 26.1.1 | NeoForge |
+| `farlandsreforged-0.3.0+mc26.1.2-fabric.jar`   | 26.1.2 | Fabric   |
+| `farlandsreforged-0.3.0+mc26.1.2-neoforge.jar` | 26.1.2 | NeoForge |
+| `farlandsreforged-0.3.0+mc26.2-fabric.jar`     | 26.2   | Fabric   |
+| `farlandsreforged-0.3.0+mc26.2-neoforge.jar`   | 26.2   | NeoForge |
 
 > If CurseForge's version dropdown doesn't yet list 26.1 or 26.1.1, those tags aren't available to publish
 > against until CurseForge adds them — upload the ones that are present and add the rest when they appear.
@@ -108,12 +109,12 @@ Upload each jar from the `jars/` folder as a **separate file**. Set **Release ty
 ## 5) Changelog (paste into each file's changelog box)
 
 ```
-Farlands Reforged 0.2.0
+Farlands Reforged 0.3.0 — Authentic Far Lands
 
-- Restores classic Far Lands-style terrain generation by preserving full Perlin-noise coordinate precision.
-- Adds the /farlands command (threshold + distance readout, set/reset with game-master permission).
-- Adds common config toggles for the terrain effect and the advancement detector.
-- Adds the "...where am I?" advancement when you reach the edge of sane terrain generation.
+- The Far Lands now look like Beta's: stretched walls, stacked sheets and long tunnels instead of a solid slab.
+- Grass and trees on top, grass and dirt on every ledge, tunnels flooded to sea level.
+- Mountains no longer glitch early at ±2.86 million.
+- Arriving in the Far Lands no longer freezes the server (no lava layer or magma bubble columns under the flood).
 - Built for this Minecraft version on Fabric and NeoForge. Fabric API not required.
 ```
 
@@ -123,7 +124,8 @@ Farlands Reforged 0.2.0
 
 - **Distribution:** leave third-party distribution **enabled** if you want launchers/modpacks to use it.
 - **Moderation:** your first project + files go through a quick manual CurseForge review before they appear publicly.
-- **Smoke test:** the 26.1.2 and 26.2 jars are in-game tested. The 26.1.1 and 26.1 jars are byte-identical
-  rebuilds and load cleanly — a 30-second world-gen check on each is worth doing before they're public.
+- **Smoke test:** the 26.2 Fabric jar is in-game tested and its worldgen verified headlessly on all four sides
+  and corners. The 26.1 and 26.1.1 jars target identical Minecraft code — a 30-second world-gen check is still
+  worth doing before they're public.
 - **Checksums:** `SHA256SUMS.txt` (in `farlands-reforged-releases`) lists hashes for every jar if you want to
   post them for verification.

@@ -2,6 +2,7 @@ package com.shigeo.farlandsreforged.mixin;
 
 import com.shigeo.farlandsreforged.FarlandsConfig;
 import com.shigeo.farlandsreforged.FarlandsRegion;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Aquifer;
 import net.minecraft.world.level.levelgen.DensityFunction;
@@ -17,7 +18,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * flooded up to y=63. Modern aquifers instead treat anything below the (ordinary-height) preliminary surface as
  * underground and hand out scattered pockets of water, lava and air. Inside the Far Lands this mixin uses the
  * dimension's global fluid rule for every column, which is exactly what vanilla does for terrain that is open
- * to the sky: water up to sea level, and the dimension's deep lava level below that.
+ * to the sky: water up to sea level. Beta had no deep lava layer, and in the Far Lands vanilla's one (below
+ * y=-54) sits directly under a flooded world, where the water/lava contact queues tens of thousands of fluid
+ * ticks per few hundred chunks and stalls the server. So lava from the global picker becomes water here.
  */
 @Mixin(targets = "net.minecraft.world.level.levelgen.Aquifer$NoiseBasedAquifer")
 public abstract class NoiseBasedAquiferMixin {
@@ -41,6 +44,9 @@ public abstract class NoiseBasedAquiferMixin {
         }
         int y = context.blockY();
         BlockState fluid = this.globalFluidPicker.computeFluid(x, y, z).at(y);
+        if (fluid.is(Blocks.LAVA)) {
+            fluid = Blocks.WATER.defaultBlockState();
+        }
         // Let fluid on the very first Far Lands column settle against whatever vanilla generated next to it.
         this.shouldScheduleFluidUpdate = !fluid.isAir() && FarlandsRegion.isOnFarlandsSeam(x, z);
         cir.setReturnValue(fluid);
