@@ -2,7 +2,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-jar = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('build/libs/farlandsreforged-0.3.0+mc26.1.2-fabric.jar')
+jar = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('build/libs/farlandsreforged-0.3.1+mc26.1.2-fabric.jar')
 required_entries = {
     'fabric.mod.json',
     'farlandsreforged.mixins.json',
@@ -32,7 +32,7 @@ with zipfile.ZipFile(jar) as zf:
     lang = zf.read('assets/farlandsreforged/lang/en_us.json').decode('utf-8')
 expected = [
     '"id": "farlandsreforged"',
-    '"version": "0.3.0+mc26.1.2-fabric"',
+    '"version": "0.3.1+mc26.1.2-fabric"',
     '"minecraft": ">=26.1.2 <26.2"',
     '"fabricloader": ">=0.19.0"',
     'BlendedNoiseMixin',

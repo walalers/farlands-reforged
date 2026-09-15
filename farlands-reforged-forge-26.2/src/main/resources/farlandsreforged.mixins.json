@@ -10,6 +10,7 @@
     "SurfaceRulesContextMixin",
     "NoiseBasedAquiferMixin",
     "UnderwaterMagmaFeatureMixin",
+    "NoodleCavesMixin",
     "CommandsMixin",
     "ServerPlayerMixin"
   ],

@@ -2,7 +2,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-jar = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('build/libs/farlandsreforged-0.3.0+mc26.1.2-neoforge.jar')
+jar = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('build/libs/farlandsreforged-0.3.1+mc26.1.2-neoforge.jar')
 mc_artifact = Path('build/moddev/artifacts/minecraft-patched-26.1.2.76.jar')
 required_entries = {
     'META-INF/neoforge.mods.toml',
@@ -38,7 +38,7 @@ with zipfile.ZipFile(jar) as zf:
 
 expected_text = [
     'modId = "farlandsreforged"',
-    'version = "0.3.0+mc26.1.2-neoforge"',
+    'version = "0.3.1+mc26.1.2-neoforge"',
     'versionRange = "[26.1.2,26.2)"',
     'Inspired by AdyTech99',
     'config = "farlandsreforged.mixins.json"',

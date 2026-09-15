@@ -1,21 +1,25 @@
-# GitHub Release v0.3.0 — paste-ready
+# GitHub Release v0.3.1 — paste-ready
 
 To publish the release page:
 
-1. Go to **https://github.com/walalers/farlands-reforged/releases/new**, create tag `v0.3.0` on `main`.
-2. **Release title:** `Farlands Reforged 0.3.0`
+1. Go to **https://github.com/walalers/farlands-reforged/releases/new**, create tag `v0.3.1` on `main`.
+2. **Release title:** `Farlands Reforged 0.3.1`
 3. Paste the notes below into the description.
-4. Under **Attach binaries**, drag in the 12 `0.3.0` jars from `PUBLISH/jars/`.
+4. Under **Attach binaries**, drag in the 12 `0.3.1` jars from `PUBLISH/jars/`.
 5. **Publish release**.
 
 ---
 
-## Farlands Reforged 0.3.0 — Authentic Far Lands
+## Farlands Reforged 0.3.1 — Authentic Far Lands
 
 The Far Lands now look like the originals: stretched walls, stacked sheets and long tunnels on the Edge and
 Corner Far Lands, starting at ±12,550,821 on X and Z. For **Fabric**, **NeoForge** and **Forge**.
 
-### What's new
+### What's new in 0.3.1
+- **No modern noodle caves inside the Far Lands.** The thin noodle tunnels modern Minecraft carves everywhere
+  bored through the walls and sheets; Beta never had them. Beta-era caves are still there.
+
+### Included from 0.3.0
 - **Authentic shapes.** 0.2.0 only unwrapped the noise, which modern world generation turned into a solid slab
   full of vanilla caves. 0.3.0 lets the legacy terrain noise overflow the way Beta 1.7.3's did and passes the
   broken density through, so the walls, sheets and tunnels come back.

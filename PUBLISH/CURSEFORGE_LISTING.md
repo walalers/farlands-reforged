@@ -93,18 +93,18 @@ Upload each jar from the `jars/` folder as a **separate file**. Set **Release ty
 
 | File | Game Version | Modloader |
 |------|--------------|-----------|
-| `farlandsreforged-0.3.0+mc26.1-fabric.jar`     | 26.1   | Fabric   |
-| `farlandsreforged-0.3.0+mc26.1-neoforge.jar`   | 26.1   | NeoForge |
-| `farlandsreforged-0.3.0+mc26.1.1-fabric.jar`   | 26.1.1 | Fabric   |
-| `farlandsreforged-0.3.0+mc26.1.1-neoforge.jar` | 26.1.1 | NeoForge |
-| `farlandsreforged-0.3.0+mc26.1.2-fabric.jar`   | 26.1.2 | Fabric   |
-| `farlandsreforged-0.3.0+mc26.1.2-neoforge.jar` | 26.1.2 | NeoForge |
-| `farlandsreforged-0.3.0+mc26.2-fabric.jar`     | 26.2   | Fabric   |
-| `farlandsreforged-0.3.0+mc26.2-neoforge.jar`   | 26.2   | NeoForge |
-| `farlandsreforged-0.3.0+mc26.1-forge.jar`     | 26.1   | Forge    |
-| `farlandsreforged-0.3.0+mc26.1.1-forge.jar`   | 26.1.1 | Forge    |
-| `farlandsreforged-0.3.0+mc26.1.2-forge.jar`   | 26.1.2 | Forge    |
-| `farlandsreforged-0.3.0+mc26.2-forge.jar`     | 26.2   | Forge    |
+| `farlandsreforged-0.3.1+mc26.1-fabric.jar`     | 26.1   | Fabric   |
+| `farlandsreforged-0.3.1+mc26.1-neoforge.jar`   | 26.1   | NeoForge |
+| `farlandsreforged-0.3.1+mc26.1.1-fabric.jar`   | 26.1.1 | Fabric   |
+| `farlandsreforged-0.3.1+mc26.1.1-neoforge.jar` | 26.1.1 | NeoForge |
+| `farlandsreforged-0.3.1+mc26.1.2-fabric.jar`   | 26.1.2 | Fabric   |
+| `farlandsreforged-0.3.1+mc26.1.2-neoforge.jar` | 26.1.2 | NeoForge |
+| `farlandsreforged-0.3.1+mc26.2-fabric.jar`     | 26.2   | Fabric   |
+| `farlandsreforged-0.3.1+mc26.2-neoforge.jar`   | 26.2   | NeoForge |
+| `farlandsreforged-0.3.1+mc26.1-forge.jar`     | 26.1   | Forge    |
+| `farlandsreforged-0.3.1+mc26.1.1-forge.jar`   | 26.1.1 | Forge    |
+| `farlandsreforged-0.3.1+mc26.1.2-forge.jar`   | 26.1.2 | Forge    |
+| `farlandsreforged-0.3.1+mc26.2-forge.jar`     | 26.2   | Forge    |
 
 > If CurseForge's version dropdown doesn't yet list 26.1 or 26.1.1, those tags aren't available to publish
 > against until CurseForge adds them — upload the ones that are present and add the rest when they appear.
@@ -114,12 +114,11 @@ Upload each jar from the `jars/` folder as a **separate file**. Set **Release ty
 ## 5) Changelog (paste into each file's changelog box)
 
 ```
-Farlands Reforged 0.3.0 — Authentic Far Lands
+Farlands Reforged 0.3.1
 
-- The Far Lands now look like Beta's: stretched walls, stacked sheets and long tunnels instead of a solid slab.
-- Grass and trees on top, grass and dirt on every ledge, tunnels flooded to sea level.
-- Mountains no longer glitch early at ±2.86 million.
-- Arriving in the Far Lands no longer freezes the server (no lava layer or magma bubble columns under the flood).
+- No modern noodle caves inside the Far Lands: the walls and sheets are solid like Beta's.
+- Includes 0.3.0: authentic Far Lands walls, sheets and tunnels; Beta-style grass, dirt and flooding;
+  no early mountain glitching; no server freeze on arrival.
 - Built for this Minecraft version on Fabric, NeoForge and Forge. Fabric API not required.
 ```
 

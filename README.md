@@ -73,7 +73,7 @@ breaks down where the noise overflows, like it did in Beta.
 Beta's terrain noise sampled its first octave at `blockX * 171.103`. At 12,550,824 that passes 2^31, the
 integer cast inside the Perlin sampler saturates, the fractional part stops being a fraction, and the fade curve
 explodes. Modern Minecraft still ships that exact noise as `old_blended_noise`, but wraps its coordinates first.
-Farlands Reforged does five small things to bring the original behavior back:
+Farlands Reforged does six small things to bring the original behavior back:
 
 1. **Unwraps only the legacy 3D terrain noise.** Every other noise keeps its wrap, so features that did not exist
    in Beta (jaggedness, noise caves, aquifers) do not break early. Without this, mountain terrain starts glitching
@@ -94,8 +94,11 @@ Farlands Reforged does five small things to bring the original behavior back:
    world flooded from bedrock up they are what freezes the server (water meeting lava, and bubble columns rising
    from every flooded cave floor queue tens of thousands of block updates), so inside the Far Lands the lava layer
    is water too and underwater magma is not placed.
+6. **Keeps modern noodle caves out.** The long, thin noodle tunnels are carved straight into the final terrain
+   density, so they bored through every Far Lands wall and sheet. Beta never had them; inside the Far Lands the
+   noodle noise reports "no tunnel" instead. Beta-era caves (the cave carver) are still there.
 
-Set `enableFarlandsTerrain = false` to turn all five off and get vanilla generation.
+Set `enableFarlandsTerrain = false` to turn all six off and get vanilla generation.
 
 ## Repository layout
 
@@ -132,6 +135,7 @@ the dependency version ranges, and `mod_version`), then rebuild.
 
 ## Changelog
 
+- **0.3.1** — No modern noodle caves inside the Far Lands, so the walls and sheets are solid the way Beta's were.
 - **0.3.0** — Authentic Far Lands. Previous versions only unwrapped the noise, which in modern world generation
   produced a solid slab riddled with vanilla caves; this release restores the classic shapes, surface and water,
   and stops the early mountain glitching at ±2.86 million. Arriving in the Far Lands no longer stalls the server

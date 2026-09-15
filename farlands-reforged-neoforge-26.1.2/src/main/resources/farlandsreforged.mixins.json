@@ -9,7 +9,8 @@
     "RangeChoiceMixin",
     "SurfaceRulesContextMixin",
     "NoiseBasedAquiferMixin",
-    "UnderwaterMagmaFeatureMixin"
+    "UnderwaterMagmaFeatureMixin",
+    "NoodleCavesMixin"
   ],
   "client": [],
   "injectors": {
