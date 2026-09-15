@@ -18,7 +18,7 @@ Everything here is paste-ready. The `jars/` folder holds the 12 files you upload
 ## 2) Summary (paste into the "Summary" field)
 
 ```
-Brings back the Beta 1.7.3 Far Lands at ±12,550,821: stretched walls, stacked sheets and flooded tunnels. Fabric, NeoForge and Forge.
+The real Beta Far Lands are back: towering walls, floating sheets and flooded tunnels at ±12,550,821. Fabric, NeoForge and Forge.
 ```
 
 ---
@@ -27,32 +27,32 @@ Brings back the Beta 1.7.3 Far Lands at ±12,550,821: stretched walls, stacked s
 
 # Farlands Reforged
 
-Walk far enough in an old Beta world and the terrain broke. At 12,550,821 blocks out, the numbers behind world generation overflowed and you got the Far Lands: giant walls, floating sheets of stone stacked into the sky, and tunnels running for thousands of blocks. Mojang patched it out long ago.
+Remember the Far Lands? Walk about 12.5 million blocks from spawn in an old Beta world and the terrain just fell apart. Stone walls as tall as the world, huge floating sheets stacked on top of each other, dark tunnels that went on forever. Beta 1.8 fixed the math behind it, and they've been gone ever since.
 
-This mod brings the Far Lands back in modern Minecraft, and makes them look like the Beta ones did, not a random glitch effect.
+This mod puts them back. It isn't a "glitchy terrain" imitation. It uses the same overflowing noise Beta used, at the same coordinates, with the same grassy ledges and flooded caves.
 
-No new blocks and no resource pack. Everything before the Far Lands generates like normal Minecraft.
+There are no new blocks and you don't need a resource pack. The rest of your world generates like normal, and you won't notice anything until you get really, really far out.
 
-## What you get
+## What's in it
 
-- **The real shapes.** You get the Edge Far Lands on X and Z and the Corner Far Lands where they meet. They start at ±12,550,821, and the terrain breaks down a second time at ±25,101,648.
-- **Beta-style dressing.** Grass and trees grow on top, every ledge has grass and dirt, and the tunnels are flooded up to sea level.
-- **Nothing breaks early.** Mountains and caves stay normal until you reach the classic distance.
-- **No modern noodle caves inside the Far Lands**, so the walls and sheets stay solid. Regular caves still generate.
-- **No lag spike when you arrive.** The flooded terrain doesn't pile up tens of thousands of water and lava updates.
-- **`/farlands` command.** It shows where the Far Lands start and how far away you are. `/farlands set <threshold>` and `/farlands reset` need operator permission.
-- **"...where am I?" advancement** for reaching the edge of sane terrain.
-- **Config** to turn the terrain or the advancement off.
+- The Edge Far Lands along X and Z, and the Corner Far Lands where they meet, starting at ±12,550,821. Keep going to ±25,101,648 and everything breaks a second time.
+- Grass and trees on top, grass and dirt on every ledge, and water filling everything up to sea level, just like Beta.
+- Mountains and caves stay normal until you reach the right distance. Nothing starts glitching early.
+- Modern noodle caves don't cut through the Far Lands, so the walls stay solid. Regular caves are still there.
+- Arriving doesn't freeze your server. All that water doesn't turn into a flood of block updates.
+- `/farlands` tells you where the Far Lands start and how far away you are. Operators also get `/farlands set <threshold>` and `/farlands reset`.
+- A hidden advancement, "...where am I?", for making it out there.
+- Config options to turn off the terrain or the advancement.
 
 ## Getting there
 
-Make a new world, then:
+You could walk. It's only 12.5 million blocks. Or make a new world and run:
 
 ```
 /tp @s 12550821 120 0
 ```
 
-Try the other directions and a corner too:
+Then try the other axis, the negative side, and a corner:
 
 ```
 /tp @s 0 120 12550821
@@ -60,13 +60,13 @@ Try the other directions and a corner too:
 /tp @s 12550821 120 12550821
 ```
 
-The Far Lands only appear in chunks that haven't been generated yet. Chunks you already explored stay as they are.
+Only chunks that haven't been generated yet turn into Far Lands. Places you've already explored won't change.
 
 ## How it works
 
-Beta's terrain noise multiplied block coordinates by 171.103. Around 12.5 million blocks that value goes past the integer limit, the math stops making sense, and the terrain goes wild. Modern Minecraft still has that same noise but clamps its inputs.
+In Beta, the terrain noise multiplied your block coordinate by 171.103. Somewhere past 12.5 million blocks that number got too big for an integer, the math broke, and out came the Far Lands. Modern Minecraft still has that exact noise. It just wraps the coordinates so they never get that big.
 
-Farlands Reforged removes the clamp on that one noise and leaves every other noise alone. Then it adjusts modern world generation (density routing, surface rules, aquifers and noodle caves) so it handles the broken noise the way Beta's generator did. If you only remove the clamp, you get a solid slab of stone from bedrock to the build limit. Most "Far Lands" mods stop there.
+Removing the wrap sounds like it should be enough, but it isn't. On its own, modern world generation treats the broken values as "deep underground", and you get a solid block of stone from bedrock to the build limit. So the mod also changes how terrain density is handled, how grass and dirt get placed, and how water fills in, and it keeps noodle caves out of the Far Lands. That's what makes it look like Beta again.
 
 ## Versions
 
@@ -78,7 +78,7 @@ Farlands Reforged removes the clamp on that one noise and leaves every other noi
 | 26.1.1    | ✅ | ✅ | ✅ |
 | 26.1      | ✅ | ✅ | ✅ |
 
-Requires **Java 25**. On Fabric you only need Fabric Loader. **Fabric API is not required.**
+You'll need **Java 25**. On Fabric, Fabric Loader is all you need. No Fabric API.
 
 ## Config
 
@@ -91,13 +91,13 @@ enableWhereAmIAdvancement = true
 farlandsStartCoordinate = 12550821
 ```
 
-`farlandsStartCoordinate` only changes the `/farlands` readout and the advancement. The terrain always breaks where the noise overflows, same as in Beta.
+`farlandsStartCoordinate` only moves the `/farlands` readout and the advancement. The terrain always breaks at the real spot, same as in Beta.
 
 ## Credits
 
-Inspired by AdyTech99's MIT-licensed **Farlands Reborn**, which first had the idea of undoing Minecraft's noise clamping.
+Big thanks to AdyTech99, whose MIT-licensed **Farlands Reborn** had the original idea of undoing the noise wrap.
 
-MIT licensed. Made by Shigeo + Mob. Source on [GitHub](https://github.com/walalers/farlands-reforged).
+MIT licensed. Made by Shigeo + Mob. The source is on [GitHub](https://github.com/walalers/farlands-reforged).
 
 ---
 
