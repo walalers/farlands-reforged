@@ -5,6 +5,7 @@
     }
   },
   "display": {
+    "background": "minecraft:textures/block/dirt.png",
     "description": {
       "translate": "advancements.farlandsreforged.where_am_i.description"
     },
