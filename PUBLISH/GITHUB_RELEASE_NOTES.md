@@ -5,7 +5,7 @@ To publish the release page:
 1. Go to **https://github.com/walalers/farlands-reforged/releases/new**, create tag `v0.3.0` on `main`.
 2. **Release title:** `Farlands Reforged 0.3.0`
 3. Paste the notes below into the description.
-4. Under **Attach binaries**, drag in the 8 `0.3.0` jars from `PUBLISH/jars/`.
+4. Under **Attach binaries**, drag in the 12 `0.3.0` jars from `PUBLISH/jars/`.
 5. **Publish release**.
 
 ---
@@ -13,7 +13,7 @@ To publish the release page:
 ## Farlands Reforged 0.3.0 — Authentic Far Lands
 
 The Far Lands now look like the originals: stretched walls, stacked sheets and long tunnels on the Edge and
-Corner Far Lands, starting at ±12,550,821 on X and Z. For **Fabric** and **NeoForge**.
+Corner Far Lands, starting at ±12,550,821 on X and Z. For **Fabric**, **NeoForge** and **Forge**.
 
 ### What's new
 - **Authentic shapes.** 0.2.0 only unwrapped the noise, which modern world generation turned into a solid slab
@@ -26,12 +26,12 @@ Corner Far Lands, starting at ±12,550,821 on X and Z. For **Fabric** and **NeoF
 - Fabric builds target Fabric Loader 0.19.5.
 
 ### Supported versions
-| Minecraft | Fabric | NeoForge |
-|-----------|:------:|:--------:|
-| 26.2      | ✅     | ✅       |
-| 26.1.2    | ✅     | ✅       |
-| 26.1.1    | ✅     | ✅       |
-| 26.1      | ✅     | ✅       |
+| Minecraft | Fabric | NeoForge | Forge |
+|-----------|:------:|:--------:|:-----:|
+| 26.2      | ✅     | ✅       | ✅    |
+| 26.1.2    | ✅     | ✅       | ✅    |
+| 26.1.1    | ✅     | ✅       | ✅    |
+| 26.1      | ✅     | ✅       | ✅    |
 
 Requires **Java 25**. Fabric builds need only Fabric Loader — **Fabric API is not required**.
 

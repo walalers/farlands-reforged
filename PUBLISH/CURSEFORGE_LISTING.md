@@ -1,6 +1,6 @@
 # Farlands Reforged — CurseForge publish pack
 
-Everything here is paste-ready. The `jars/` folder holds the 8 files you upload.
+Everything here is paste-ready. The `jars/` folder holds the 12 files you upload.
 `logo.png` is your 400×400 project logo. Work top-to-bottom and you're live.
 
 ---
@@ -18,7 +18,7 @@ Everything here is paste-ready. The `jars/` folder holds the 8 files you upload.
 ## 2) Summary (paste into the "Summary" field)
 
 ```
-Restores classic Far Lands-style terrain by preserving full Perlin-noise coordinate precision. Fabric & NeoForge.
+Restores classic Far Lands-style terrain by preserving full Perlin-noise coordinate precision. Fabric, NeoForge & Forge.
 ```
 
 ---
@@ -75,6 +75,7 @@ farlandsStartCoordinate = 12550821
 - **Java 25**
 - **Fabric** builds: Fabric Loader only — **Fabric API is NOT required** (this mod is mixin-based).
 - **NeoForge** builds: NeoForge for your Minecraft version.
+- **Forge** builds: Forge for your Minecraft version (config lives in `config/farlandsreforged.properties`).
 
 ## Credits
 
@@ -100,6 +101,10 @@ Upload each jar from the `jars/` folder as a **separate file**. Set **Release ty
 | `farlandsreforged-0.3.0+mc26.1.2-neoforge.jar` | 26.1.2 | NeoForge |
 | `farlandsreforged-0.3.0+mc26.2-fabric.jar`     | 26.2   | Fabric   |
 | `farlandsreforged-0.3.0+mc26.2-neoforge.jar`   | 26.2   | NeoForge |
+| `farlandsreforged-0.3.0+mc26.1-forge.jar`     | 26.1   | Forge    |
+| `farlandsreforged-0.3.0+mc26.1.1-forge.jar`   | 26.1.1 | Forge    |
+| `farlandsreforged-0.3.0+mc26.1.2-forge.jar`   | 26.1.2 | Forge    |
+| `farlandsreforged-0.3.0+mc26.2-forge.jar`     | 26.2   | Forge    |
 
 > If CurseForge's version dropdown doesn't yet list 26.1 or 26.1.1, those tags aren't available to publish
 > against until CurseForge adds them — upload the ones that are present and add the rest when they appear.
@@ -115,7 +120,7 @@ Farlands Reforged 0.3.0 — Authentic Far Lands
 - Grass and trees on top, grass and dirt on every ledge, tunnels flooded to sea level.
 - Mountains no longer glitch early at ±2.86 million.
 - Arriving in the Far Lands no longer freezes the server (no lava layer or magma bubble columns under the flood).
-- Built for this Minecraft version on Fabric and NeoForge. Fabric API not required.
+- Built for this Minecraft version on Fabric, NeoForge and Forge. Fabric API not required.
 ```
 
 ---

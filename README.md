@@ -5,7 +5,7 @@ of old Minecraft worlds — in modern Minecraft. It lets the legacy 3D terrain n
 in Beta 1.7.3, then makes the rest of modern world generation treat that broken noise the way the old generator did.
 
 No new blocks, no resource pack, no fuss — just the classic terrain ghost, faithfully reforged. Available for
-both **Fabric** and **NeoForge**.
+**Fabric**, **NeoForge** and **Forge**.
 
 > Inspired by [AdyTech99's](https://github.com/AdyTech99) MIT-licensed **Farlands Reborn**, whose core idea is to
 > undo Mojang's far-coordinate Perlin-noise precision wrapping.
@@ -24,12 +24,12 @@ both **Fabric** and **NeoForge**.
 
 ## Supported versions
 
-| Minecraft | Fabric | NeoForge |
-|-----------|:------:|:--------:|
-| 26.2      | ✅     | ✅       |
-| 26.1.2    | ✅     | ✅       |
-| 26.1.1    | ✅     | ✅       |
-| 26.1      | ✅     | ✅       |
+| Minecraft | Fabric | NeoForge | Forge |
+|-----------|:------:|:--------:|:-----:|
+| 26.2      | ✅     | ✅       | ✅    |
+| 26.1.2    | ✅     | ✅       | ✅    |
+| 26.1.1    | ✅     | ✅       | ✅    |
+| 26.1      | ✅     | ✅       | ✅    |
 
 Requires **Java 25**. Fabric builds need only Fabric Loader — **Fabric API is not required** (this mod is
 mixin-based).
@@ -106,12 +106,14 @@ farlands-reforged-fabric-26.2/        Fabric source for Minecraft 26.2
 farlands-reforged-fabric-26.1.2/      Fabric source for Minecraft 26.1.2
 farlands-reforged-26.2/               NeoForge source for Minecraft 26.2
 farlands-reforged-neoforge-26.1.2/    NeoForge source for Minecraft 26.1.2
+farlands-reforged-forge-26.2/         Forge source (built for every Minecraft version, see its README)
 PUBLISH/                              Release jars + CurseForge listing assets
 ```
 
 Each project shares the same source under `src/main/java/com/shigeo/farlandsreforged/` and is retargeted to its
-Minecraft version through `gradle.properties`. The 26.1.1 and 26.1 release jars are version-retargeted builds of
-the corresponding 26.1.2 artifacts (the compiled bytecode is identical across these point releases).
+Minecraft version through `gradle.properties`. The Fabric and NeoForge 26.1.1 and 26.1 release jars are
+version-retargeted builds of the corresponding 26.1.2 artifacts (the classes the mod hooks are identical across
+these point releases). The Forge jars are real builds of the Forge project for each version.
 
 ## Building
 
