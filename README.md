@@ -109,6 +109,7 @@ Each loader/version pair is a self-contained Gradle project:
 farlands-reforged-fabric-26.3/        Fabric source for Minecraft 26.3 (new worldgen engine, see below)
 farlands-reforged-fabric-26.2/        Fabric source for Minecraft 26.2
 farlands-reforged-fabric-26.1.2/      Fabric source for Minecraft 26.1.2
+farlands-reforged-neoforge-26.3/      NeoForge source for Minecraft 26.3 (NeoForge beta, unreleased)
 farlands-reforged-26.2/               NeoForge source for Minecraft 26.2
 farlands-reforged-neoforge-26.1.2/    NeoForge source for Minecraft 26.1.2
 farlands-reforged-forge-26.2/         Forge source (built for every Minecraft version, see its README)
@@ -125,7 +126,10 @@ rules, the Perlin wrap moved inside the shared sampler), so `farlands-reforged-f
 aimed at the same six behaviours. The legacy terrain noise can no longer simply skip its wrap there, because the
 overflowed values do not fit in a float; instead `FarlandsClassicNoise` re-evaluates that noise in double
 precision from vanilla's own octaves wherever the wrap would change anything (beyond ±98,000 blocks), which
-reproduces the 26.2 result. NeoForge and Forge have not released 26.3 builds yet.
+reproduces the 26.2 result. `farlands-reforged-neoforge-26.3` combines those 26.3 mixins with the NeoForge
+config, commands and events from `farlands-reforged-26.2`. It targets the NeoForge `26.3.0.0-beta` and is not
+released yet; with the same seed its Far Lands terrain matches the Fabric 26.3 build. Forge has no 26.3 release
+yet.
 
 ## Building
 
