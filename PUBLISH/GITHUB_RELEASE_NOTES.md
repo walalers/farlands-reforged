@@ -51,4 +51,4 @@ older Farlands Reforged jar. Use a **new world** (or unexplored chunks) to see t
 /tp @s 12550900 100 12550900
 ```
 
-*Inspired by AdyTech99's MIT-licensed Farlands Reborn. MIT licensed. By Shigeo + Mob.*
+*Inspired by AdyTech99's MIT-licensed Farlands Reborn. MIT licensed. By Shigeo.*

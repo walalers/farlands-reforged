@@ -158,7 +158,7 @@ the dependency version ranges, and `mod_version`), then rebuild.
 
 ## Credits
 
-- **Shigeo + Mob** — author.
+- **Shigeo** — author.
 - **AdyTech99** — original idea via the MIT-licensed *Farlands Reborn*. Respect to the old noise ghosts.
 
 ## License
