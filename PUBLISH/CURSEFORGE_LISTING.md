@@ -27,7 +27,7 @@ The real Beta Far Lands are back: towering walls, floating sheets and flooded tu
 
 # Farlands Reforged
 
-Remember the Far Lands? Walk about 12.5 million blocks from spawn in an old Beta world and the terrain just fell apart. Stone walls as tall as the world, huge floating sheets stacked on top of each other, dark tunnels that went on forever. Beta 1.8 fixed the math behind it, and they've been gone ever since.
+Remember the Far Lands? Walk about 12.5 million blocks from spawn in an old Beta world and the terrain just fell apart. Stone walls as tall as the world, huge floating sheets stacked on top of each other, dark tunnels that went on forever. Beta 1.8 fixed it, and they've been gone ever since.
 
 This mod puts them back. It isn't a "glitchy terrain" imitation. It uses the same overflowing noise Beta used, at the same coordinates, with the same grassy ledges and flooded caves.
 
@@ -97,7 +97,7 @@ farlandsStartCoordinate = 12550821
 
 Big thanks to AdyTech99, whose MIT-licensed **Farlands Reborn** had the original idea of undoing the noise wrap.
 
-MIT licensed. Made by Shigeo + Mob. The source is on [GitHub](https://github.com/walalers/farlands-reforged).
+MIT licensed. Made by Shigeo. The source is on [GitHub](https://github.com/walalers/farlands-reforged).
 
 ---
 
