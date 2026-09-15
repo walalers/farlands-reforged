@@ -101,6 +101,7 @@ Upload each jar from the `jars/` folder as a **separate file**. Set **Release ty
 | `farlandsreforged-0.3.1+mc26.1.2-neoforge.jar` | 26.1.2 | NeoForge |
 | `farlandsreforged-0.3.1+mc26.2-fabric.jar`     | 26.2   | Fabric   |
 | `farlandsreforged-0.3.1+mc26.2-neoforge.jar`   | 26.2   | NeoForge |
+| `farlandsreforged-0.3.1+mc26.3-fabric.jar`     | 26.3   | Fabric   |
 | `farlandsreforged-0.3.1+mc26.1-forge.jar`     | 26.1   | Forge    |
 | `farlandsreforged-0.3.1+mc26.1.1-forge.jar`   | 26.1.1 | Forge    |
 | `farlandsreforged-0.3.1+mc26.1.2-forge.jar`   | 26.1.2 | Forge    |

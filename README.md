@@ -26,6 +26,7 @@ No new blocks, no resource pack, no fuss — just the classic terrain ghost, fai
 
 | Minecraft | Fabric | NeoForge | Forge |
 |-----------|:------:|:--------:|:-----:|
+| 26.3      | ✅     | —        | —     |
 | 26.2      | ✅     | ✅       | ✅    |
 | 26.1.2    | ✅     | ✅       | ✅    |
 | 26.1.1    | ✅     | ✅       | ✅    |
@@ -105,6 +106,7 @@ Set `enableFarlandsTerrain = false` to turn all six off and get vanilla generati
 Each loader/version pair is a self-contained Gradle project:
 
 ```
+farlands-reforged-fabric-26.3/        Fabric source for Minecraft 26.3 (new worldgen engine, see below)
 farlands-reforged-fabric-26.2/        Fabric source for Minecraft 26.2
 farlands-reforged-fabric-26.1.2/      Fabric source for Minecraft 26.1.2
 farlands-reforged-26.2/               NeoForge source for Minecraft 26.2
@@ -117,6 +119,13 @@ Each project shares the same source under `src/main/java/com/shigeo/farlandsrefo
 Minecraft version through `gradle.properties`. The Fabric and NeoForge 26.1.1 and 26.1 release jars are
 version-retargeted builds of the corresponding 26.1.2 artifacts (the classes the mod hooks are identical across
 these point releases). The Forge jars are real builds of the Forge project for each version.
+
+Minecraft 26.3 rewrote world generation (compiled float density samplers, material rules instead of surface
+rules, the Perlin wrap moved inside the shared sampler), so `farlands-reforged-fabric-26.3` has its own mixins
+aimed at the same six behaviours. The legacy terrain noise can no longer simply skip its wrap there, because the
+overflowed values do not fit in a float; instead `FarlandsClassicNoise` re-evaluates that noise in double
+precision from vanilla's own octaves wherever the wrap would change anything (beyond ±98,000 blocks), which
+reproduces the 26.2 result. NeoForge and Forge have not released 26.3 builds yet.
 
 ## Building
 
@@ -136,6 +145,7 @@ the dependency version ranges, and `mod_version`), then rebuild.
 ## Changelog
 
 - **0.3.1** — No modern noodle caves inside the Far Lands, so the walls and sheets are solid the way Beta's were.
+  Also available for Fabric 26.3, ported to its new world generation engine.
 - **0.3.0** — Authentic Far Lands. Previous versions only unwrapped the noise, which in modern world generation
   produced a solid slab riddled with vanilla caves; this release restores the classic shapes, surface and water,
   and stops the early mountain glitching at ±2.86 million. Arriving in the Far Lands no longer stalls the server
