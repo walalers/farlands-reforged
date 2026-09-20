@@ -2,7 +2,7 @@ package com.shigeo.farlandsreforged;
 
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class FarlandsEvents {
-    private static final Identifier WHERE_AM_I_ADVANCEMENT = Identifier.fromNamespaceAndPath("farlandsreforged", "farlands/where_am_i");
+    private static final ResourceLocation WHERE_AM_I_ADVANCEMENT = ResourceLocation.fromNamespaceAndPath("farlandsreforged", "farlands/where_am_i");
 
     private FarlandsEvents() {
     }

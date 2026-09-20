@@ -7,9 +7,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = ServerPlayer.class, remap = false)
+@Mixin(ServerPlayer.class)
 public abstract class ServerPlayerMixin {
-    @Inject(method = "doTick", at = @At("TAIL"), remap = false)
+    @Inject(method = "doTick", at = @At("TAIL"))
     private void farlandsreforged$awardAdvancement(CallbackInfo ci) {
         FarlandsEvents.awardIfInFarlands((ServerPlayer) (Object) this);
     }

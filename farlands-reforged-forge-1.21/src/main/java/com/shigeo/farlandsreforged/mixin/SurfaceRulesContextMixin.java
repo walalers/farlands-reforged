@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * <p>The level returned is the bottom of the world rather than an arbitrary "minus infinity": the frozen-ocean
  * iceberg pass walks every column down to this level, so it must stay a real build height.
  */
-@Mixin(targets = "net.minecraft.world.level.levelgen.SurfaceRules$Context", remap = false)
+@Mixin(targets = "net.minecraft.world.level.levelgen.SurfaceRules$Context")
 public abstract class SurfaceRulesContextMixin {
     @Shadow @Final private WorldGenerationContext context;
     @Shadow private int blockX;

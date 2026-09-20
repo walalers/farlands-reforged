@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * bubble column up through ~100 blocks of water, queueing thousands of block ticks per chunk. Beta had no magma,
  * so the feature is skipped inside the Far Lands.
  */
-@Mixin(value = UnderwaterMagmaFeature.class, remap = false)
+@Mixin(UnderwaterMagmaFeature.class)
 public abstract class UnderwaterMagmaFeatureMixin {
     @Inject(method = "place", at = @At("HEAD"), cancellable = true)
     private void farlandsreforged$skipInFarlands(FeaturePlaceContext<UnderwaterMagmaConfiguration> context, CallbackInfoReturnable<Boolean> cir) {

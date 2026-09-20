@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * {@code Mth.floor} returns; it only differs once a coordinate passes the integer limit on the negative axis,
  * where the classic code wrapped around instead of saturating. See {@link FarlandsRegion#classicFloor}.
  */
-@Mixin(value = ImprovedNoise.class, remap = false)
+@Mixin(ImprovedNoise.class)
 public abstract class ImprovedNoiseMixin {
     @Redirect(
             method = "noise(DDDDD)D",

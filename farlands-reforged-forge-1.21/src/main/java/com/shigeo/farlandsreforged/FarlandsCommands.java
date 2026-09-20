@@ -14,11 +14,11 @@ public final class FarlandsCommands {
         dispatcher.register(Commands.literal("farlands")
             .executes(context -> showInfo(context.getSource()))
             .then(Commands.literal("set")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(Commands.argument("threshold", LongArgumentType.longArg(FarlandsConfig.MIN_START, FarlandsConfig.MAX_START))
                     .executes(context -> setThreshold(context.getSource(), LongArgumentType.getLong(context, "threshold")))))
             .then(Commands.literal("reset")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .executes(context -> resetThreshold(context.getSource()))));
     }
 

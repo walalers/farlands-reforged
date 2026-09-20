@@ -118,7 +118,8 @@ farlands-reforged-26.2/               NeoForge source for Minecraft 26.2
 farlands-reforged-neoforge-26.1.2/    NeoForge source for Minecraft 26.1.2
 farlands-reforged-neoforge-1.21.11/   NeoForge source for Minecraft 1.21.11
 farlands-reforged-neoforge-1.21/      NeoForge source for Minecraft 1.21 ... 1.21.10
-farlands-reforged-forge-26.2/         Forge source (built for every Minecraft version, see its README)
+farlands-reforged-forge-26.2/         Forge source for Minecraft 26.x (built per version, see its README)
+farlands-reforged-forge-1.21/         Forge source for Minecraft 1.21 ... 1.21.10 (ForgeGradle 6, SRG refmap)
 tools/                                Scripts that verify a port before the game runs (see tools/README.md)
 PUBLISH/                              Release jars + CurseForge listing assets
 ```
