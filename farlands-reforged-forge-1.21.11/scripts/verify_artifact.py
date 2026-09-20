@@ -1,9 +1,10 @@
-"""Sanity-check a built Farlands Reforged Forge jar.
+"""Sanity-check a built Farlands Reforged Forge jar (1.21.11).
 
-Beyond the usual metadata checks this verifies the thing that makes the Forge build different from every
-other project here: Forge runs on SRG names across the whole 1.21 family, so the jar must carry a refmap
-that maps each mixin target to its SRG name. Without it the mod loads and then silently fails to find a
-single injection point.
+Forge 61 runs on Mojang's official names, not SRG - ForgeGradle 7 does no reobfuscation and emits no
+refmap, which is why this project mirrors farlands-reforged-forge-26.2 rather than the SRG-based
+farlands-reforged-forge-1.21. So the check here is the mirror image of that project's: assert that the
+mod's calls into Minecraft and its @Shadow field are still spelled the way the sources spell them. An
+SRG name appearing in this jar would mean the mixins are looking for members the runtime does not have.
 
     python scripts/verify_artifact.py [jar]
 """
@@ -35,11 +36,9 @@ MIXINS = [
     'CommandsMixin',
     'ServerPlayerMixin',
 ]
-refmap_name = f"{props['mod_id']}.refmap.json"
 required_entries = {
     'META-INF/mods.toml',
     f"{props['mod_id']}.mixins.json",
-    refmap_name,
     'data/farlandsreforged/advancement/farlands/where_am_i.json',
     'assets/farlandsreforged/lang/en_us.json',
 }
@@ -58,7 +57,6 @@ with zipfile.ZipFile(jar) as zf:
         raise SystemExit('Missing required jar entries: ' + ', '.join(missing))
     mods_toml = zf.read('META-INF/mods.toml').decode('utf-8')
     mixins = zf.read(f"{props['mod_id']}.mixins.json").decode('utf-8')
-    refmap = json.loads(zf.read(refmap_name).decode('utf-8'))
     advancement = zf.read('data/farlandsreforged/advancement/farlands/where_am_i.json').decode('utf-8')
     lang = zf.read('assets/farlandsreforged/lang/en_us.json').decode('utf-8')
 
@@ -78,43 +76,22 @@ if miss:
 if '${' in combined:
     raise SystemExit('Unexpanded placeholder found in jar metadata/resources')
 
-# The refmap is the whole point of this project. Two different mechanisms put SRG names into the jar and
-# both have to have run:
-#
-#   * Injection points are matched by name at runtime, so every mixin with an @Inject/@Redirect target
-#     needs refmap entries, and those entries must be SRG (m_123456_ / f_123456_) rather than the official
-#     names the sources are written in.
-#   * A @Shadow member is a field or method on the mixin class itself, so reobfJar rewrites it in place
-#     instead. CommandsMixin is the one mixin here with no refmap entries at all - it injects into <init>,
-#     which is never remapped, and its only other Minecraft reference is the shadowed dispatcher field.
-#     So check that field really did become SRG; if reobf silently stopped running, the jar would still
-#     build and /farlands would simply never register.
-srg = re.compile(r'\b[mf]_\d+_\b')
-mappings = refmap.get('mappings', {})
-REFMAP_EXEMPT = {'CommandsMixin'}
-
-unmapped, not_srg = [], []
-for name in MIXINS:
-    if name in REFMAP_EXEMPT:
-        continue
-    entries = mappings.get(f'com/shigeo/farlandsreforged/mixin/{name}')
-    if not entries:
-        unmapped.append(name)
-    elif not any(srg.search(str(v)) for v in entries.values()):
-        not_srg.append(name)
-if unmapped:
-    raise SystemExit('No refmap entries for: ' + ', '.join(unmapped)
-                     + ' -- these mixins would find nothing at runtime.')
-if not_srg:
-    raise SystemExit('Refmap entries for ' + ', '.join(not_srg)
-                     + ' are not SRG names; remapping did not happen.')
-
+# ForgeGradle 7 leaves the jar in official names. Prove it, in both places a stray SRG name would show up:
+# the compiled classes (which would mean a reobf step ran that should not have) and the mixin config.
+srg = re.compile(r'\b(?:[mf]_\d+_|C_\d+_)\b')
 with zipfile.ZipFile(jar) as zf:
+    for name in sorted(n for n in zf.namelist() if n.endswith('.class')):
+        body = zf.read(name).decode('latin-1')
+        if srg.search(body):
+            raise SystemExit(f'{name} contains SRG names; this project must stay on official names, '
+                             'as Forge 61 does not run on SRG.')
     commands_mixin = zf.read('com/shigeo/farlandsreforged/mixin/CommandsMixin.class')
-if b'dispatcher' in commands_mixin or not srg.search(commands_mixin.decode('latin-1')):
-    raise SystemExit('CommandsMixin still shadows "dispatcher" under its official name; reobfJar did not '
-                     'run, so /farlands would never register.')
+if b'dispatcher' not in commands_mixin:
+    raise SystemExit('CommandsMixin no longer shadows "dispatcher" under its official name.')
+if f"{props['mod_id']}.refmap.json" in names:
+    raise SystemExit('A refmap was generated. Forge 61 runs on official names, so a refmap here means the '
+                     'mixins were remapped to names the runtime does not use.')
 
 print(f'OK: {jar.name} targets Minecraft {props["minecraft_version"]} ({props["minecraft_version_range"]}) '
-      f'on Forge {props["forge_version"]}, Java {props["java_version"]}, all {len(MIXINS)} mixins present, '
-      f'{len(MIXINS) - len(REFMAP_EXEMPT)} with SRG refmap entries and CommandsMixin reobfuscated in place.')
+      f'on Forge {props["forge_version"]}, Java {props["java_version"]}, all {len(MIXINS)} mixins present '
+      f'and every class still in official names, with no refmap.')

@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * decides solid-versus-air again. Vanilla never produces inputs of that magnitude, so ordinary terrain is
  * untouched.
  */
-@Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$RangeChoice")
+@Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$RangeChoice", remap = false)
 public abstract class RangeChoiceMixin {
     @Shadow public abstract DensityFunction input();
     @Shadow public abstract double minInclusive();

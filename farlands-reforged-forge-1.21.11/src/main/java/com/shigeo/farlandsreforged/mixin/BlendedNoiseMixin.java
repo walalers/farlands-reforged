@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * 1.7.3 (2^31 / 171.103 = 12,550,824 in noise space). Every other noise keeps its wrap, so terrain features
  * that did not exist back then (jaggedness, cave noise, aquifers...) do not glitch early or unevenly.
  */
-@Mixin(BlendedNoise.class)
+@Mixin(value = BlendedNoise.class, remap = false)
 public abstract class BlendedNoiseMixin {
     @Redirect(
             method = "compute(Lnet/minecraft/world/level/levelgen/DensityFunction$FunctionContext;)D",

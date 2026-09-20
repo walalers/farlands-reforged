@@ -1,16 +1,19 @@
-# Farlands Reforged — Forge 1.21 … 1.21.11
+# Farlands Reforged — Forge 1.21 … 1.21.10
 
-Forge build for the Minecraft 1.21 family. Same terrain code as every other project: `FarlandsRegion`
+Forge build for the older half of the Minecraft 1.21 family (1.21.2 excluded — Forge never shipped one).
+
+Same terrain code as every other project: `FarlandsRegion`
 plus the seven worldgen mixins, with `CommandsMixin` and `ServerPlayerMixin` for the loader glue, and a
 plain `config/farlandsreforged.properties` file.
 
 **This project is not a copy of `farlands-reforged-forge-26.2` with the versions swapped**, for two
 reasons:
 
-- **Forge runs on SRG names here.** Its userdev `config.json` ships a `universal-srg` jar for every
-  version from 1.21 to 1.21.11, where Minecraft 26.x ships official names. So the 26.x project's
-  `@Mixin(..., remap = false)` cannot be reused: the mixins are remapped normally and the
+- **Forge runs on SRG names here.** ForgeGradle 6 reobfuscates the finished jar into SRG, so the 26.x
+  project's `@Mixin(..., remap = false)` cannot be reused: the mixins are remapped normally and the
   `org.spongepowered.mixin` plugin generates the refmap that lets them find their targets at runtime.
+  This stops being true at 1.21.11, which moved to ForgeGradle 7 and back to official names — see
+  `farlands-reforged-forge-1.21.11`, which mirrors the 26.x project instead of this one.
 - **ForgeGradle 6, not 7.** That means the FG6 spelling of the run configurations, and Gradle 8 —
   which cannot run on Java 25, so this project's Gradle itself needs **Java 21**:
 
@@ -21,7 +24,8 @@ python scripts/verify_artifact.py
 
 The sources also carry the two 1.21-family differences: `ResourceLocation` instead of `Identifier`, and
 `source.hasPermission(Commands.LEVEL_GAMEMASTERS)` instead of `Commands.hasPermission(...)`. Minecraft
-1.21.11 uses the newer names, so it is built from `farlands-reforged-forge-1.21.11`.
+1.21.11 uses the newer names, and a different build system entirely, so it is built from
+`farlands-reforged-forge-1.21.11`.
 
 ## Versions
 

@@ -22,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * y=-54) sits directly under a flooded world, where the water/lava contact queues tens of thousands of fluid
  * ticks per few hundred chunks and stalls the server. So lava from the global picker becomes water here.
  */
-@Mixin(targets = "net.minecraft.world.level.levelgen.Aquifer$NoiseBasedAquifer")
+@Mixin(targets = "net.minecraft.world.level.levelgen.Aquifer$NoiseBasedAquifer", remap = false)
 public abstract class NoiseBasedAquiferMixin {
     @Shadow @Final private Aquifer.FluidPicker globalFluidPicker;
     @Shadow private boolean shouldScheduleFluidUpdate;
