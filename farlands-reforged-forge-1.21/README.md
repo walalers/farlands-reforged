@@ -46,3 +46,17 @@ JAVA_HOME=/path/to/jdk-21 ./gradlew build -Pminecraft_version=1.21.4 \
 | 1.21.8    | 58.1.22       | 58                 |
 | 1.21.9    | 59.0.5        | 59                 |
 | 1.21.10   | 60.1.15       | 60                 |
+
+## Why every version needs its own jar
+
+`tools/compare_jars.py` puts these ten jars in two groups, splitting at 1.21.6 — the same place Fabric and
+NeoForge split, but for two reasons rather than one:
+
+- `ServerPlayer.level()` becomes covariant there and returns `ServerLevel`, which changes `FarlandsEvents`.
+- `CommandSourceStack.hasPermission(int)` changes SRG name from `m_6761_` to `m_81369_`, which changes
+  `FarlandsCommands`.
+
+That second one is Forge-only and worth remembering: `reobfJar` bakes version-specific SRG ids into the jar,
+where Fabric's intermediary names are designed to stay stable across versions. A Forge jar is tied to the
+version it was built against more tightly than a Fabric one, so do not widen `minecraft_version_range` here
+on the assumption that two releases behave the same.
