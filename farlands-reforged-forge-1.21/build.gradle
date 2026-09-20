@@ -43,13 +43,26 @@ mixin {
 }
 
 repositories {
+    // Mojang's library repo has to come first. Minecraft 1.21 needs LWJGL's natives-macos-patch
+    // artifacts, which exist only here - but the plain lwjgl POMs are on Maven Central too, and Gradle
+    // fetches every artifact of a module from whichever repository supplied its metadata. Let Central
+    // win the metadata and the patch jars become unresolvable.
+    maven { name = 'Mojang'; url = 'https://libraries.minecraft.net/' }
+    maven { name = 'MinecraftForge'; url = 'https://maven.minecraftforge.net/' }
+    maven { name = 'Sponge'; url = 'https://repo.spongepowered.org/repository/maven-public/' }
     mavenCentral()
-    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+// Forge runs on SRG, so the mod's own calls into Minecraft have to be rewritten from the official names
+// the sources are written in. ForgeGradle 6 does not register this task on its own; naming the jar here
+// creates reobfJar, and the jar task below is finalized by it.
+reobf {
+    jar {}
 }
 
 tasks.withType(JavaCompile).configureEach {

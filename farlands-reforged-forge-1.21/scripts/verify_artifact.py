@@ -78,26 +78,43 @@ if miss:
 if '${' in combined:
     raise SystemExit('Unexpanded placeholder found in jar metadata/resources')
 
-# The refmap is the whole point of this project. Every mixin that targets a Minecraft class must appear
-# in it, and its entries must actually be SRG (m_123456_ / f_123456_) rather than the names we wrote.
-mappings = refmap.get('mappings', {})
+# The refmap is the whole point of this project. Two different mechanisms put SRG names into the jar and
+# both have to have run:
+#
+#   * Injection points are matched by name at runtime, so every mixin with an @Inject/@Redirect target
+#     needs refmap entries, and those entries must be SRG (m_123456_ / f_123456_) rather than the official
+#     names the sources are written in.
+#   * A @Shadow member is a field or method on the mixin class itself, so reobfJar rewrites it in place
+#     instead. CommandsMixin is the one mixin here with no refmap entries at all - it injects into <init>,
+#     which is never remapped, and its only other Minecraft reference is the shadowed dispatcher field.
+#     So check that field really did become SRG; if reobf silently stopped running, the jar would still
+#     build and /farlands would simply never register.
 srg = re.compile(r'\b[mf]_\d+_\b')
-described, unmapped = [], []
+mappings = refmap.get('mappings', {})
+REFMAP_EXEMPT = {'CommandsMixin'}
+
+unmapped, not_srg = [], []
 for name in MIXINS:
-    key = f'com/shigeo/farlandsreforged/mixin/{name}'
-    entries = mappings.get(key)
+    if name in REFMAP_EXEMPT:
+        continue
+    entries = mappings.get(f'com/shigeo/farlandsreforged/mixin/{name}')
     if not entries:
         unmapped.append(name)
-        continue
-    if not any(srg.search(str(v)) for v in entries.values()):
-        described.append(name)
+    elif not any(srg.search(str(v)) for v in entries.values()):
+        not_srg.append(name)
 if unmapped:
     raise SystemExit('No refmap entries for: ' + ', '.join(unmapped)
                      + ' -- these mixins would find nothing at runtime.')
-if described:
-    raise SystemExit('Refmap entries for ' + ', '.join(described)
+if not_srg:
+    raise SystemExit('Refmap entries for ' + ', '.join(not_srg)
                      + ' are not SRG names; remapping did not happen.')
 
+with zipfile.ZipFile(jar) as zf:
+    commands_mixin = zf.read('com/shigeo/farlandsreforged/mixin/CommandsMixin.class')
+if b'dispatcher' in commands_mixin or not srg.search(commands_mixin.decode('latin-1')):
+    raise SystemExit('CommandsMixin still shadows "dispatcher" under its official name; reobfJar did not '
+                     'run, so /farlands would never register.')
+
 print(f'OK: {jar.name} targets Minecraft {props["minecraft_version"]} ({props["minecraft_version_range"]}) '
-      f'on Forge {props["forge_version"]}, Java {props["java_version"]}, all {len(MIXINS)} mixins present '
-      f'and every one of them remapped to SRG in {refmap_name}.')
+      f'on Forge {props["forge_version"]}, Java {props["java_version"]}, all {len(MIXINS)} mixins present, '
+      f'{len(MIXINS) - len(REFMAP_EXEMPT)} with SRG refmap entries and CommandsMixin reobfuscated in place.')
