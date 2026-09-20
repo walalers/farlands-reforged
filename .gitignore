@@ -27,3 +27,6 @@ desktop.ini
 
 # Gradle wrapper jar is kept intentionally (needed to build):
 !gradle/wrapper/gradle-wrapper.jar
+
+mappings/
+intermediary/
