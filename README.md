@@ -31,8 +31,11 @@ No new blocks, no resource pack, no fuss — just the classic terrain ghost, fai
 | 26.1.2           | ✅     | ✅       | ✅    | 25   |
 | 26.1.1           | ✅     | ✅       | ✅    | 25   |
 | 26.1             | ✅     | ✅       | ✅    | 25   |
-| 1.21.11          | ✅     | ✅       | —     | 21   |
-| 1.21 … 1.21.10   | ✅     | ✅       | —     | 21   |
+| 1.21.11          | ✅     | ✅       | ✅    | 21   |
+| 1.21 … 1.21.10   | ✅     | ✅       | ✅¹   | 21   |
+
+¹ Except 1.21.2, which Forge never shipped a build for. NeoForge's 21.2, 21.6, 21.7 and 21.9 never left
+beta, so the 1.21.2, 1.21.6, 1.21.7 and 1.21.9 NeoForge jars are built against those betas.
 
 The 26.x builds need **Java 25**; the 1.21 builds need **Java 21**. Fabric builds need only Fabric Loader —
 **Fabric API is not required** (this mod is mixin-based).
