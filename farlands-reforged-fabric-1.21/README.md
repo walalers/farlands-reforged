@@ -21,25 +21,16 @@ Unlike the 26.x jars, 1.21.x Minecraft is obfuscated, so this project maps it wi
 version passed on the command line:
 
 ```bash
-./gradlew build -Pminecraft_version=1.21.4 \
-  "-Pminecraft_version_range=>=1.21.4 <1.21.5" \
+./gradlew build -Pminecraft_version=1.21.4 -Pminecraft_version_range=1.21.4 \
   -Pmod_version=0.3.1+mc1.21.4-fabric
 python scripts/verify_artifact.py
 ```
 
-| Minecraft | minecraft_version_range |
-|-----------|-------------------------|
-| 1.21      | `>=1.21 <1.21.2`        |
-| 1.21.1    | `>=1.21 <1.21.2`        |
-| 1.21.2    | `>=1.21.2 <1.21.4`      |
-| 1.21.3    | `>=1.21.2 <1.21.4`      |
-| 1.21.4    | `>=1.21.4 <1.21.5`      |
-| 1.21.5    | `>=1.21.5 <1.21.6`      |
-| 1.21.6    | `>=1.21.6 <1.21.9`      |
-| 1.21.7    | `>=1.21.6 <1.21.9`      |
-| 1.21.8    | `>=1.21.6 <1.21.9`      |
-| 1.21.9    | `>=1.21.9 <1.21.11`     |
-| 1.21.10   | `>=1.21.9 <1.21.11`     |
-
-The ranges group versions whose mixin targets are byte-for-byte compatible, which is what
-`tools/check_targets.py` and `tools/verify_injections.py` in the repository root check.
+Each version gets its own build and its own jar. That is not just caution: Loom remaps the finished jar
+to intermediary, and while every mixin target in this family keeps the same intermediary name, one
+ordinary call does not. From 1.21.6 on, `ServerPlayer` overrides `level()` covariantly to return
+`ServerLevel` instead of `Level`, so `FarlandsEvents` compiles to a different call depending on the
+version it was built against, even though its source never changes. The break is one-directional — the
+inherited `Level level()` still exists on the newer versions — which is exactly the kind of thing that
+looks fine until somebody runs the wrong jar. `tools/compare_jars.py` in the repository root is what
+catches it: it hashes the compiled classes and groups the jars that really are interchangeable.

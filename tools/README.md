@@ -1,6 +1,6 @@
 # Porting tools
 
-Four small scripts used to port Farlands Reforged to a new Minecraft version without guessing. They
+Five small scripts used to port Farlands Reforged to a new Minecraft version without guessing. They
 answer the questions a compile cannot: *do my mixin targets still exist*, *is the injection point still
 inside the method*, and *can one jar serve several Minecraft versions*.
 
@@ -37,3 +37,13 @@ mapping sets and groups the versions that share an identical set of names.
 Two things it deliberately does not hide: a member Mojang leaves unobfuscated, and a member intermediary
 leaves unmapped (overrides inherit the declaring interface's name), are both printed with `(unmapped)`
 rather than silently falling back to a name that looks stable.
+
+## `compare_jars.py <jars...>` — which built jars are actually interchangeable?
+
+The last word on whether one jar can cover several Minecraft versions, and the one to trust when it
+disagrees with `check_intermediary.py`. It hashes the compiled classes and groups the jars that match.
+
+Mapping tables only see the names a mod mentions; they do not see what the compiler emitted. A covariant
+override is the trap: `ServerPlayer.level()` returns `Level` on 1.21 and `ServerLevel` on 1.21.10, so the
+two builds call different methods while every name in the source stays the same. Only the bytecode shows
+it, which is why the 1.21 family gets a real build per version rather than one jar with a wide range.
