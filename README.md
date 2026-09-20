@@ -24,16 +24,18 @@ No new blocks, no resource pack, no fuss — just the classic terrain ghost, fai
 
 ## Supported versions
 
-| Minecraft | Fabric | NeoForge | Forge |
-|-----------|:------:|:--------:|:-----:|
-| 26.3      | ✅     | —        | —     |
-| 26.2      | ✅     | ✅       | ✅    |
-| 26.1.2    | ✅     | ✅       | ✅    |
-| 26.1.1    | ✅     | ✅       | ✅    |
-| 26.1      | ✅     | ✅       | ✅    |
+| Minecraft        | Fabric | NeoForge | Forge | Java |
+|------------------|:------:|:--------:|:-----:|:----:|
+| 26.3             | ✅     | —        | —     | 25   |
+| 26.2             | ✅     | ✅       | ✅    | 25   |
+| 26.1.2           | ✅     | ✅       | ✅    | 25   |
+| 26.1.1           | ✅     | ✅       | ✅    | 25   |
+| 26.1             | ✅     | ✅       | ✅    | 25   |
+| 1.21.11          | ✅     | ✅       | —     | 21   |
+| 1.21 … 1.21.10   | ✅     | ✅       | —     | 21   |
 
-Requires **Java 25**. Fabric builds need only Fabric Loader — **Fabric API is not required** (this mod is
-mixin-based).
+The 26.x builds need **Java 25**; the 1.21 builds need **Java 21**. Fabric builds need only Fabric Loader —
+**Fabric API is not required** (this mod is mixin-based).
 
 ## Download
 
@@ -109,10 +111,15 @@ Each loader/version pair is a self-contained Gradle project:
 farlands-reforged-fabric-26.3/        Fabric source for Minecraft 26.3 (new worldgen engine, see below)
 farlands-reforged-fabric-26.2/        Fabric source for Minecraft 26.2
 farlands-reforged-fabric-26.1.2/      Fabric source for Minecraft 26.1.2
+farlands-reforged-fabric-1.21.11/     Fabric source for Minecraft 1.21.11
+farlands-reforged-fabric-1.21/        Fabric source for Minecraft 1.21 ... 1.21.10
 farlands-reforged-neoforge-26.3/      NeoForge source for Minecraft 26.3 (NeoForge beta, unreleased)
 farlands-reforged-26.2/               NeoForge source for Minecraft 26.2
 farlands-reforged-neoforge-26.1.2/    NeoForge source for Minecraft 26.1.2
+farlands-reforged-neoforge-1.21.11/   NeoForge source for Minecraft 1.21.11
+farlands-reforged-neoforge-1.21/      NeoForge source for Minecraft 1.21 ... 1.21.10
 farlands-reforged-forge-26.2/         Forge source (built for every Minecraft version, see its README)
+tools/                                Scripts that verify a port before the game runs (see tools/README.md)
 PUBLISH/                              Release jars + CurseForge listing assets
 ```
 
@@ -120,6 +127,18 @@ Each project shares the same source under `src/main/java/com/shigeo/farlandsrefo
 Minecraft version through `gradle.properties`. The Fabric and NeoForge 26.1.1 and 26.1 release jars are
 version-retargeted builds of the corresponding 26.1.2 artifacts (the classes the mod hooks are identical across
 these point releases). The Forge jars are real builds of the Forge project for each version.
+
+The Minecraft 1.21 releases are the first ones this mod targets that ship **obfuscated**, so the two 1.21
+projects map Minecraft with `loom.officialMojangMappings()` (Fabric) rather than the no-op mapping the 26.x
+projects use, and build on Java 21. Nothing in the six Far Lands mechanisms had to change: every mixin
+target, `@Shadow` field and redirected call is identical across all twelve versions from 1.21 to 1.21.11.
+Two pieces of loader glue do differ, which is why there are two project folders per loader — 1.21.11
+renamed `ResourceLocation` to `Identifier` and turned command permission levels into `PermissionCheck`
+objects, while 1.21 through 1.21.10 still use the old names.
+
+Each version in that range gets its own real build. From 1.21.6 on, `ServerPlayer` overrides `level()`
+covariantly to return `ServerLevel` instead of `Level`, so the advancement check compiles to a different
+call even though its source never changes, and a jar built for 1.21.8 would not run on 1.21.5.
 
 Minecraft 26.3 rewrote world generation (compiled float density samplers, material rules instead of surface
 rules, the Perlin wrap moved inside the shared sampler), so `farlands-reforged-fabric-26.3` has its own mixins
