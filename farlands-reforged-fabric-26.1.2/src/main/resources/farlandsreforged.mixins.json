@@ -12,7 +12,8 @@
     "UnderwaterMagmaFeatureMixin",
     "NoodleCavesMixin",
     "CommandsMixin",
-    "ServerPlayerMixin"
+    "ServerPlayerMixin",
+    "PackRepositoryMixin"
   ],
   "injectors": {
     "defaultRequire": 1

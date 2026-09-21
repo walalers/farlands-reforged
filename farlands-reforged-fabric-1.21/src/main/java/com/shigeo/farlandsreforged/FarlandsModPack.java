@@ -3,7 +3,6 @@ package com.shigeo.farlandsreforged;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackLocationInfo;
-import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.PathPackResources;
 import net.minecraft.server.packs.repository.Pack;
@@ -25,9 +24,18 @@ import java.util.Optional;
  * {@code server.getAdvancements().get(...)} returns null, and {@link FarlandsEvents} silently does
  * nothing. No error is ever logged, which is why only a {@code /datapack list} shows the problem.
  *
- * <p>The pack is built straight from {@link Pack}'s constructor with hand-written metadata rather than
- * {@code Pack.readMetaAndCreate}, so the jar needs no {@code pack.mcmeta}. That matters across a version
- * range: {@code pack_format} numbers change every release and a wrong one silently drops the pack.
+ * <p>Two deliberate choices keep this one file working across every Minecraft version this mod targets:
+ *
+ * <ul>
+ *   <li>The pack is built from {@link Pack}'s constructor with hand-written metadata rather than
+ *       {@code Pack.readMetaAndCreate}, so the jar needs no {@code pack.mcmeta}. That matters across a
+ *       version range: {@code pack_format} numbers change nearly every release and a stale one silently
+ *       drops the pack instead of failing loudly.
+ *   <li>Resources come from vanilla's own {@link PathPackResources.PathResourcesSupplier}, so the
+ *       {@code Pack.ResourcesSupplier} interface staying still is vanilla's problem rather than ours -
+ *       Minecraft 26.3 replaced its {@code openPrimary}/{@code openFull} pair with
+ *       {@code openMetadata}/{@code openResources}, and this code did not have to care.
+ * </ul>
  */
 public final class FarlandsModPack {
     private FarlandsModPack() {
@@ -49,18 +57,6 @@ public final class FarlandsModPack {
                 PackSource.BUILT_IN,
                 Optional.empty());
 
-        Pack.ResourcesSupplier resources = new Pack.ResourcesSupplier() {
-            @Override
-            public PackResources openPrimary(PackLocationInfo info) {
-                return new PathPackResources(info, root);
-            }
-
-            @Override
-            public PackResources openFull(PackLocationInfo info, Pack.Metadata metadata) {
-                return new PathPackResources(info, root);
-            }
-        };
-
         Pack.Metadata metadata = new Pack.Metadata(
                 Component.literal("Farlands Reforged resources"),
                 PackCompatibility.COMPATIBLE,
@@ -68,7 +64,9 @@ public final class FarlandsModPack {
                 List.of());
 
         // required + fixed: this is mod content, not something a player should be able to turn off.
-        consumer.accept(new Pack(location, resources, metadata,
+        consumer.accept(new Pack(location,
+                new PathPackResources.PathResourcesSupplier(root),
+                metadata,
                 new PackSelectionConfig(true, Pack.Position.TOP, true)));
     };
 }
