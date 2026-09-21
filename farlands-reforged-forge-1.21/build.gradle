@@ -3,10 +3,6 @@ plugins {
     id 'idea'
     id 'eclipse'
     id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
-    // Forge runs on SRG names for the whole 1.21 family (its userdev config ships a universal-srg jar),
-    // unlike Minecraft 26.x. So unlike farlands-reforged-forge-26.2, the mixins here are remapped and
-    // this plugin generates the refmap that lets them find their targets at runtime.
-    id 'org.spongepowered.mixin' version '0.7.+'
 }
 
 version = mod_version
@@ -16,8 +12,10 @@ base.archivesName = mod_id
 java.toolchain.languageVersion = JavaLanguageVersion.of(java_version as int)
 
 minecraft {
-    // Write the sources against Mojang's own names, the same names every other project in this
-    // repository uses; the refmap maps them to SRG on the way out.
+    // Forge 51 runs on Mojang's official names - verified by javap on an installed
+    // forge-1.21-51.0.33 server, whose DensityFunctions$Noise has `noise`/`compute`, not SRG ids. So the
+    // sources are written against official names and the jar ships them unchanged: no reobf, no refmap,
+    // and remap = false on every @Mixin, exactly like farlands-reforged-forge-1.21.11 and the 26.x project.
     mappings channel: 'official', version: minecraft_version
 
     // ForgeGradle 6 run configurations, which spell these differently from the FG7 ones in
@@ -25,21 +23,13 @@ minecraft {
     runs {
         client {
             workingDirectory project.file('run')
-            property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            args "--mixin.config=${mod_id}.mixins.json"
         }
         server {
             workingDirectory project.file('run')
-            property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            args '--nogui'
+            args '--nogui', "--mixin.config=${mod_id}.mixins.json"
         }
     }
-}
-
-mixin {
-    add sourceSets.main, "${mod_id}.refmap.json"
-    config "${mod_id}.mixins.json"
 }
 
 repositories {
@@ -55,14 +45,6 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-}
-
-// Forge runs on SRG, so the mod's own calls into Minecraft have to be rewritten from the official names
-// the sources are written in. ForgeGradle 6 does not register this task on its own; naming the jar here
-// creates reobfJar, and the jar task below is finalized by it.
-reobf {
-    jar {}
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -99,5 +81,4 @@ tasks.named('jar', Jar).configure {
             'MixinConfigs'            : "${mod_id}.mixins.json"
         ])
     }
-    finalizedBy 'reobfJar'
 }

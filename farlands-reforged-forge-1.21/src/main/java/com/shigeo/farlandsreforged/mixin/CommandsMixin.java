@@ -12,9 +12,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(Commands.class)
+@Mixin(value = Commands.class, remap = false)
 public abstract class CommandsMixin {
-    @Shadow @Final private CommandDispatcher<CommandSourceStack> dispatcher;
+    @Shadow(remap = false) @Final private CommandDispatcher<CommandSourceStack> dispatcher;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void farlandsreforged$registerCommand(Commands.CommandSelection environment, CommandBuildContext context, CallbackInfo ci) {

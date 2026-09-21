@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * Beta had nothing like them. The noodle function only carves where the {@code minecraft:noodle} noise is
  * non-negative, so reporting that noise as -1 inside the Far Lands turns the tunnels off there and nowhere else.
  */
-@Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$Noise")
+@Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$Noise", remap = false)
 public abstract class NoodleCavesMixin {
     @Shadow @Final private DensityFunction.NoiseHolder noise;
 

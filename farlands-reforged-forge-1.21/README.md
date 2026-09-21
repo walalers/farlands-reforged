@@ -6,14 +6,20 @@ Same terrain code as every other project: `FarlandsRegion`
 plus the seven worldgen mixins, with `CommandsMixin` and `ServerPlayerMixin` for the loader glue, and a
 plain `config/farlandsreforged.properties` file.
 
-**This project is not a copy of `farlands-reforged-forge-26.2` with the versions swapped**, for two
-reasons:
+**Forge 51-60 runs on Mojang's official names, not SRG.** An earlier version of this project assumed the
+opposite — it reobfuscated the jar into SRG and generated a mixin refmap — and the result could not load
+at all: the server died during bootstrap with *"@Shadow field f_208787_ was not located in the target
+class DensityFunctions$Noise. No refMap loaded."* Disassembling an installed `forge-1.21-51.0.33` server
+settles it: `DensityFunctions$Noise` has `noise` / `compute` / `xzScale`, and there is no SRG-named jar
+anywhere in the install. So this project now does what `farlands-reforged-forge-1.21.11` and the 26.x
+project do — no `reobf`, no refmap, `remap = false` on every `@Mixin`.
 
-- **Forge runs on SRG names here.** ForgeGradle 6 reobfuscates the finished jar into SRG, so the 26.x
-  project's `@Mixin(..., remap = false)` cannot be reused: the mixins are remapped normally and the
-  `org.spongepowered.mixin` plugin generates the refmap that lets them find their targets at runtime.
-  This stops being true at 1.21.11, which moved to ForgeGradle 7 and back to official names — see
-  `farlands-reforged-forge-1.21.11`, which mirrors the 26.x project instead of this one.
+Do **not** infer the naming from the userdev `config.json`: it lists `universal-srg` for every version in
+the family, which is a build artifact and not a statement about runtime names. Only the installed server
+answers the question.
+
+The one thing that really is different from `farlands-reforged-forge-1.21.11`:
+
 - **ForgeGradle 6, not 7.** That means the FG6 spelling of the run configurations, and Gradle 8 —
   which cannot run on Java 25, so this project's Gradle itself needs **Java 21**:
 
@@ -21,6 +27,18 @@ reasons:
 JAVA_HOME=/path/to/jdk-21 ./gradlew build
 python scripts/verify_artifact.py
 ```
+
+Two more things differ from the 1.21.11 project, both found by running a real Forge server:
+
+- **The mod class needs a no-arg constructor.** Forge 51 calls `getDeclaredConstructor()` with no
+  arguments at all, so the `FMLJavaModLoadingContext` constructor used by the 1.21.11 project is never
+  found and loading fails with `NoSuchMethodException`. Forge 52 and up ask for the context constructor
+  first but fall back to the no-arg one, so a single no-arg constructor covers 1.21 through 1.21.10.
+- **`pack.mcmeta` uses the old `pack_format` schema.** The `min_format` / `max_format` keys the 26.x and
+  1.21.11 projects use do not exist before 1.21.11; on 1.21 the metadata fails to parse, the mod's data
+  pack is silently dropped, and the "...where am I?" advancement never registers. `supported_formats`
+  spans 34-99 here because one file has to satisfy both the resource-pack and data-pack checks across
+  the whole range (1.21 is resource 34 / data 48; 1.21.10 is far higher).
 
 The sources also carry the two 1.21-family differences: `ResourceLocation` instead of `Identifier`, and
 `source.hasPermission(Commands.LEVEL_GAMEMASTERS)` instead of `Commands.hasPermission(...)`. Minecraft

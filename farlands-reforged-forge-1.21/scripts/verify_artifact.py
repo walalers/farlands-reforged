@@ -1,9 +1,16 @@
 """Sanity-check a built Farlands Reforged Forge jar.
 
-Beyond the usual metadata checks this verifies the thing that makes the Forge build different from every
-other project here: Forge runs on SRG names across the whole 1.21 family, so the jar must carry a refmap
-that maps each mixin target to its SRG name. Without it the mod loads and then silently fails to find a
-single injection point.
+Beyond the usual metadata checks this guards the three things that once made every jar in this range
+unloadable, each of which a successful build happily produced anyway:
+
+  * Forge 51-60 runs on Mojang's **official** names. An earlier version of this project reobfuscated the
+    jar into SRG and shipped a refmap; the server then died on "@Shadow field f_208787_ was not located".
+    So: no refmap, no SRG identifiers anywhere.
+  * The mod class must have a **no-arg** constructor. Forge 51 calls getDeclaredConstructor() with no
+    arguments, so an FMLJavaModLoadingContext constructor is never found and loading fails.
+  * pack.mcmeta must use the old **pack_format** schema. The 26.x/1.21.11 min_format/max_format keys do
+    not parse before 1.21.11, and the failure is silent: the mod's data pack is dropped, the advancement
+    never registers, and the server still boots and generates terrain perfectly.
 
     python scripts/verify_artifact.py [jar]
 """
@@ -39,7 +46,7 @@ refmap_name = f"{props['mod_id']}.refmap.json"
 required_entries = {
     'META-INF/mods.toml',
     f"{props['mod_id']}.mixins.json",
-    refmap_name,
+    'pack.mcmeta',
     'data/farlandsreforged/advancement/farlands/where_am_i.json',
     'assets/farlandsreforged/lang/en_us.json',
 }
@@ -56,9 +63,14 @@ with zipfile.ZipFile(jar) as zf:
     missing = sorted(required_entries - names)
     if missing:
         raise SystemExit('Missing required jar entries: ' + ', '.join(missing))
+    if refmap_name in names:
+        raise SystemExit(f'{refmap_name} is in the jar; Forge 51-60 runs on official names, so a refmap '
+                         'means the jar was reobfuscated into SRG and will not load.')
     mods_toml = zf.read('META-INF/mods.toml').decode('utf-8')
     mixins = zf.read(f"{props['mod_id']}.mixins.json").decode('utf-8')
-    refmap = json.loads(zf.read(refmap_name).decode('utf-8'))
+    pack_mcmeta = json.loads(zf.read('pack.mcmeta').decode('utf-8'))
+    mod_class = zf.read('com/shigeo/farlandsreforged/FarlandsReforged.class')
+    classes = {n: zf.read(n) for n in names if n.endswith('.class')}
     advancement = zf.read('data/farlandsreforged/advancement/farlands/where_am_i.json').decode('utf-8')
     lang = zf.read('assets/farlandsreforged/lang/en_us.json').decode('utf-8')
 
@@ -78,43 +90,38 @@ if miss:
 if '${' in combined:
     raise SystemExit('Unexpanded placeholder found in jar metadata/resources')
 
-# The refmap is the whole point of this project. Two different mechanisms put SRG names into the jar and
-# both have to have run:
-#
-#   * Injection points are matched by name at runtime, so every mixin with an @Inject/@Redirect target
-#     needs refmap entries, and those entries must be SRG (m_123456_ / f_123456_) rather than the official
-#     names the sources are written in.
-#   * A @Shadow member is a field or method on the mixin class itself, so reobfJar rewrites it in place
-#     instead. CommandsMixin is the one mixin here with no refmap entries at all - it injects into <init>,
-#     which is never remapped, and its only other Minecraft reference is the shadowed dispatcher field.
-#     So check that field really did become SRG; if reobf silently stopped running, the jar would still
-#     build and /farlands would simply never register.
-srg = re.compile(r'\b[mf]_\d+_\b')
-mappings = refmap.get('mappings', {})
-REFMAP_EXEMPT = {'CommandsMixin'}
+# 1. Nothing in the jar may carry an SRG name. Two mechanisms used to put them there - the refmap for
+#    injection points, and reobfJar rewriting @Shadow members in place - and both are gone now. A single
+#    m_123456_ / f_123456_ anywhere means reobfuscation crept back in and the jar will not load.
+srg = re.compile(rb'\b[mf]_\d+_\b')
+reobfuscated = sorted(n for n, data in classes.items() if srg.search(data))
+if reobfuscated:
+    raise SystemExit('SRG names found in: ' + ', '.join(reobfuscated)
+                     + ' -- the jar was reobfuscated, but Forge 51-60 runs on official names.')
+if 'refmap' in json.loads(mixins):
+    raise SystemExit('The mixin config declares a refmap; it must not, on official names.')
 
-unmapped, not_srg = [], []
-for name in MIXINS:
-    if name in REFMAP_EXEMPT:
-        continue
-    entries = mappings.get(f'com/shigeo/farlandsreforged/mixin/{name}')
-    if not entries:
-        unmapped.append(name)
-    elif not any(srg.search(str(v)) for v in entries.values()):
-        not_srg.append(name)
-if unmapped:
-    raise SystemExit('No refmap entries for: ' + ', '.join(unmapped)
-                     + ' -- these mixins would find nothing at runtime.')
-if not_srg:
-    raise SystemExit('Refmap entries for ' + ', '.join(not_srg)
-                     + ' are not SRG names; remapping did not happen.')
+# 2. CommandsMixin shadows Commands.dispatcher. On official names that field keeps its real name; if it
+#    were rewritten the mixin would attach to nothing and /farlands would never register.
+if b'dispatcher' not in classes['com/shigeo/farlandsreforged/mixin/CommandsMixin.class']:
+    raise SystemExit('CommandsMixin no longer shadows "dispatcher" under its official name.')
 
-with zipfile.ZipFile(jar) as zf:
-    commands_mixin = zf.read('com/shigeo/farlandsreforged/mixin/CommandsMixin.class')
-if b'dispatcher' in commands_mixin or not srg.search(commands_mixin.decode('latin-1')):
-    raise SystemExit('CommandsMixin still shadows "dispatcher" under its official name; reobfJar did not '
-                     'run, so /farlands would never register.')
+# 3. The mod class must not ask for FMLJavaModLoadingContext: Forge 51 only ever looks for a no-arg
+#    constructor, and Forge 52+ falls back to one, so no-arg is the only signature that works range-wide.
+if b'FMLJavaModLoadingContext' in mod_class:
+    raise SystemExit('FarlandsReforged takes FMLJavaModLoadingContext; Forge 51 looks only for a no-arg '
+                     'constructor and mod loading would fail with NoSuchMethodException.')
+
+# 4. pack.mcmeta must use the pre-1.21.11 schema, or the data pack is silently dropped and the
+#    advancement never registers - with no error anywhere except one line in the server log.
+pack = pack_mcmeta.get('pack', {})
+if 'min_format' in pack or 'max_format' in pack:
+    raise SystemExit('pack.mcmeta uses the 1.21.11+ min_format/max_format schema; before 1.21.11 it fails '
+                     'to parse and the mod data pack is dropped.')
+if not isinstance(pack.get('pack_format'), int):
+    raise SystemExit('pack.mcmeta has no integer pack_format.')
 
 print(f'OK: {jar.name} targets Minecraft {props["minecraft_version"]} ({props["minecraft_version_range"]}) '
       f'on Forge {props["forge_version"]}, Java {props["java_version"]}, all {len(MIXINS)} mixins present, '
-      f'{len(MIXINS) - len(REFMAP_EXEMPT)} with SRG refmap entries and CommandsMixin reobfuscated in place.')
+      f'no refmap and no SRG names, no-arg mod constructor, pack_format '
+      f'{pack_mcmeta["pack"]["pack_format"]}.')
