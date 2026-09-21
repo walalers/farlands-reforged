@@ -81,6 +81,17 @@ def audit(path, version):
     with zipfile.ZipFile(path) as zf:
         names = set(zf.namelist())
 
+        # 0. No jar entry should have a space in its path. This catches a specific and nasty failure:
+        #    the repository lives under ~/Desktop, which iCloud Drive syncs, and iCloud resolves a
+        #    conflict by leaving a duplicate directory beside the original - "farlandsreforged 2",
+        #    "lang 5". Gradle then sweeps those into the jar, which silently doubles in size and gains
+        #    a package whose name is not even a legal Java identifier. It is invisible to every other
+        #    check here, because the real classes are all still present and correct.
+        junk = sorted(n for n in names if " " in n)
+        if junk:
+            problems.append(f"{len(junk)} entries with a space in the path, e.g. {junk[0]!r} "
+                            f"- stale duplicates swept in from a dirty build directory")
+
         # 1. The version inside must match the filename, or build/libs handed us a stale jar.
         want = f"{version}+mc{expected_mc}-{loader}"
         got = declared_version(zf, loader)

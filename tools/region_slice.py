@@ -39,6 +39,27 @@ TAG_LIST, TAG_COMPOUND, TAG_INT_ARRAY, TAG_LONG_ARRAY = 9, 10, 11, 12
 AIR = {"minecraft:air", "minecraft:cave_air", "minecraft:void_air"}
 FLUID = {"minecraft:water", "minecraft:lava", "minecraft:flowing_water", "minecraft:flowing_lava"}
 
+# Plants and other decoration that a player walks straight through. These are deliberately *not* part
+# of the terrain's shape: vanilla moves feature placement around between Minecraft versions, so two
+# versions on the same seed disagree about where the seagrass went while agreeing exactly about where
+# the walls are. Counting them as solid turns a perfect match into a few hundred phantom differences.
+# `grass_block` and `mushroom_block` are real terrain and are deliberately absent from this list.
+VEGETATION_WORDS = (
+    "grass", "fern", "flower", "sapling", "seagrass", "kelp", "vine", "bush", "coral",
+    "mushroom", "sugar_cane", "cactus", "bamboo", "lily_pad", "moss_carpet", "snow",
+    "dandelion", "poppy", "orchid", "allium", "bluet", "tulip", "daisy", "cornflower",
+    "lily_of_the_valley", "sunflower", "lilac", "rose_bush", "peony", "pitcher", "torchflower",
+    "pink_petals", "dripleaf", "azalea", "spore_blossom", "glow_lichen", "hanging_roots",
+    "sculk_vein", "amethyst_cluster", "amethyst_bud", "pointed_dripstone", "cobweb",
+)
+SOLID_EXCEPTIONS = ("grass_block", "mushroom_block", "mushroom_stem", "moss_block", "azalea_leaves")
+
+
+def is_vegetation(name):
+    if any(word in name for word in SOLID_EXCEPTIONS):
+        return False
+    return any(word in name for word in VEGETATION_WORDS)
+
 
 class Reader:
     def __init__(self, data):
@@ -179,7 +200,8 @@ def chunk_blocks(nbt):
 
 
 def classify(name):
-    if name in AIR:
+    """Reduce a block to the part of it that is terrain: solid, fluid, or nothing."""
+    if name in AIR or is_vegetation(name):
         return "a"
     if name in FLUID:
         return "f"
@@ -212,19 +234,30 @@ def sample(world, x_range, z_range, y_range):
 def diff(left, right):
     """Compare two samples by solid/fluid/air shape, and separately by exact block id."""
     keys = set(left) & set(right)
-    shape, exact, examples = 0, 0, []
+    shape, vegetation, exact, examples = 0, 0, 0, []
     for key in sorted(keys):
-        if left[key] != right[key]:
-            exact += 1
-            if classify(left[key]) != classify(right[key]):
-                shape += 1
-                if len(examples) < 10:
-                    examples.append(f"{key}: {left[key]} vs {right[key]}")
+        if left[key] == right[key]:
+            continue
+        exact += 1
+        if is_vegetation(left[key]) or is_vegetation(right[key]):
+            # Skip the shape check entirely here. A plant tells us nothing about what the terrain
+            # underneath it is: seagrass occupies what would otherwise be water, so comparing it
+            # against the other world's water would report a fluid-vs-air difference that is really
+            # just vanilla deciding to grow something on one version and not the other.
+            vegetation += 1
+            continue
+        if classify(left[key]) != classify(right[key]):
+            shape += 1
+            if len(examples) < 10:
+                examples.append(f"{key}: {left[key]} vs {right[key]}")
     return {
         "compared": len(keys),
         "only_in_left": len(set(left) - set(right)),
         "only_in_right": len(set(right) - set(left)),
+        # The one that matters. Anything above zero means the mod generates different terrain.
         "shape_differences": shape,
+        # Expected to be non-zero between Minecraft versions, and harmless.
+        "vegetation_differences": vegetation,
         "exact_differences": exact,
         "examples": examples,
     }

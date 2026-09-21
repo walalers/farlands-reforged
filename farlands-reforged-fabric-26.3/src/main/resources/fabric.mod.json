@@ -6,8 +6,8 @@
   "description": "${mod_description}",
   "authors": ["${mod_authors}"],
   "contact": {
-    "sources": "https://github.com/shigeo/farlands-reforged",
-    "issues": "https://github.com/shigeo/farlands-reforged/issues"
+    "sources": "https://github.com/walalers/farlands-reforged",
+    "issues": "https://github.com/walalers/farlands-reforged/issues"
   },
   "license": "${mod_license}",
   "environment": "*",

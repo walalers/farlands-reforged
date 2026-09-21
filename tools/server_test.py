@@ -136,7 +136,8 @@ def java_for(mc):
     return "java"
 
 
-def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, corrupt):
+def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, corrupt,
+             forceload=None, settle=90):
     workdir.mkdir(parents=True, exist_ok=True)
     (workdir / "mods").mkdir(exist_ok=True)
 
@@ -182,9 +183,18 @@ def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, c
         if result["booted"]:
             time.sleep(3)  # RCON binds a moment after the log line
             try:
-                with Rcon("127.0.0.1", rcon_port, password, timeout=60) as rcon:
+                with Rcon("127.0.0.1", rcon_port, password, timeout=120) as rcon:
                     result["farlands"] = rcon.command("farlands")
                     result["datapack"] = rcon.command("datapack list")
+                    if forceload:
+                        # Generate a patch of the Far Lands so region_slice.py has chunks to read.
+                        # forceload generates them in the background, so give it time and then flush
+                        # to disk - unsaved chunks are not in the region files yet.
+                        x0, z0, x1, z1 = forceload
+                        result["forceload"] = rcon.command(f"forceload add {x0} {z0} {x1} {z1}")
+                        time.sleep(settle)
+                        result["save"] = rcon.command("save-all flush")
+                        time.sleep(5)
             except (OSError, RconError) as exc:
                 result["errors"].append(f"rcon: {exc}")
     finally:
@@ -212,6 +222,10 @@ def main():
     ap.add_argument("--password", default="farlands")
     ap.add_argument("--boot-timeout", type=float, default=300)
     ap.add_argument("--corrupt-advancement", action="store_true")
+    ap.add_argument("--forceload", nargs=4, type=int, metavar=("X1", "Z1", "X2", "Z2"),
+                    help="generate this block region, so its chunks land in the region files")
+    ap.add_argument("--settle", type=float, default=90,
+                    help="seconds to let forceload finish generating before saving")
     ap.add_argument("--json", action="store_true", help="print the result as one JSON line")
     args = ap.parse_args()
 
@@ -221,7 +235,8 @@ def main():
             sys.exit(f"port {port} is already in use")
 
     result = run_test(args.mc, args.jar, workdir, args.cache, args.port, args.rcon_port,
-                      args.password, args.boot_timeout, args.corrupt_advancement)
+                      args.password, args.boot_timeout, args.corrupt_advancement,
+                      args.forceload, args.settle)
 
     if args.json:
         print(json.dumps(result))
