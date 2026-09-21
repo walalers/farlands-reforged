@@ -34,7 +34,9 @@ No new blocks, no resource pack, no fuss — just the classic terrain ghost, fai
 | 1.21.11          | ✅     | ✅       | ✅    | 21   |
 | 1.21 … 1.21.10   | ✅     | ✅       | ✅¹   | 21   |
 
-¹ Except 1.21.2, which Forge never shipped a build for. NeoForge's 21.2, 21.6, 21.7 and 21.9 never left
+¹ Except 1.21.2, which Forge never shipped a build for. On Minecraft **1.21** the Forge jar needs
+**Forge 51.0.23 or newer** — earlier 51.x builds bundle Mixin 0.8.5, which does not understand this mod's
+`JAVA_21` mixins and stops the server during bootstrap. NeoForge's 21.2, 21.6, 21.7 and 21.9 never left
 beta, so the 1.21.2, 1.21.6, 1.21.7 and 1.21.9 NeoForge jars are built against those betas.
 
 The 26.x builds need **Java 25**; the 1.21 builds need **Java 21**. Fabric builds need only Fabric Loader —
@@ -122,7 +124,8 @@ farlands-reforged-neoforge-26.1.2/    NeoForge source for Minecraft 26.1.2
 farlands-reforged-neoforge-1.21.11/   NeoForge source for Minecraft 1.21.11
 farlands-reforged-neoforge-1.21/      NeoForge source for Minecraft 1.21 ... 1.21.10
 farlands-reforged-forge-26.2/         Forge source for Minecraft 26.x (built per version, see its README)
-farlands-reforged-forge-1.21/         Forge source for Minecraft 1.21 ... 1.21.10 (ForgeGradle 6, SRG refmap)
+farlands-reforged-forge-1.21.11/      Forge source for Minecraft 1.21.11 (ForgeGradle 7)
+farlands-reforged-forge-1.21/         Forge source for Minecraft 1.21 ... 1.21.10 (ForgeGradle 6, official names)
 tools/                                Scripts that verify a port before the game runs (see tools/README.md)
 PUBLISH/                              Release jars + CurseForge listing assets
 ```

@@ -77,17 +77,22 @@ run "neoforge:1.21.11" farlands-reforged-neoforge-1.21.11 \
   bash -c "'$GRADLE_BIN' --no-daemon --console=plain build -x test -Pmod_version=$VERSION+mc1.21.11-neoforge"
 
 echo "=== Forge 1.21 - 1.21.10 (no 1.21.2; Forge never shipped one) ==="
+# Third field is the minimum Forge the jar declares. It is normally just the major, but Minecraft
+# 1.21 is special: Forge builds before 51.0.23 bundle Mixin 0.8.5, which does not recognise the
+# JAVA_21 compatibility level in farlandsreforged.mixins.json and dies during bootstrap. Declaring
+# "[51,)" there would promise something that crashes on arrival.
 fg_for() { case "$1" in
-  1.21) echo "51.0.0 51";; 1.21.1) echo "52.1.16 52";; 1.21.3) echo "53.1.12 53";;
-  1.21.4) echo "54.1.18 54";; 1.21.5) echo "55.1.13 55";; 1.21.6) echo "56.0.0 56";;
-  1.21.7) echo "57.0.0 57";; 1.21.8) echo "58.1.22 58";; 1.21.9) echo "59.0.5 59";;
-  1.21.10) echo "60.1.15 60";; esac; }
+  1.21) echo "51.0.23 51 51.0.23";; 1.21.1) echo "52.1.16 52 52";; 1.21.3) echo "53.1.12 53 53";;
+  1.21.4) echo "54.1.18 54 54";; 1.21.5) echo "55.1.13 55 55";; 1.21.6) echo "56.0.0 56 56";;
+  1.21.7) echo "57.0.0 57 57";; 1.21.8) echo "58.1.22 58 58";; 1.21.9) echo "59.0.5 59 59";;
+  1.21.10) echo "60.1.15 60 60";; esac; }
 for v in 1.21 1.21.1 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10; do
-  read -r fv fm <<< "$(fg_for "$v")"
+  read -r fv fm fmin <<< "$(fg_for "$v")"
   run "forge:$v" farlands-reforged-forge-1.21 \
     env JAVA_HOME="$JDK21" ./gradlew --no-daemon --console=plain build -x test \
       -Pminecraft_version="$v" "-Pminecraft_version_range=[$v]" \
-      -Pforge_version="$fv" -Pforge_loader_major="$fm" -Pmod_version="$VERSION+mc$v-forge"
+      -Pforge_version="$fv" -Pforge_loader_major="$fm" -Pforge_version_min="$fmin" \
+      -Pmod_version="$VERSION+mc$v-forge"
 done
 
 echo "=== Forge 1.21.11 ==="

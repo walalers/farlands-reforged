@@ -14,7 +14,9 @@ description='''${mod_description}'''
 [[dependencies.farlandsreforged]]
     modId="forge"
     mandatory=true
-    versionRange="[${forge_loader_major},)"
+    # Not simply "[major,)": Forge 1.21 builds before 51.0.23 bundle Mixin 0.8.5, which does not
+    # recognise this mod's JAVA_21 compatibility level and kills the server during bootstrap.
+    versionRange="[${forge_version_min},)"
     ordering="NONE"
     side="BOTH"
 

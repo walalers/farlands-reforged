@@ -52,12 +52,32 @@ The sources also carry the two 1.21-family differences: `ResourceLocation` inste
 ```bash
 JAVA_HOME=/path/to/jdk-21 ./gradlew build -Pminecraft_version=1.21.4 \
   -Pminecraft_version_range='[1.21.4]' -Pforge_version=54.1.18 -Pforge_loader_major=54 \
-  -Pmod_version=0.4.0+mc1.21.4-forge
+  -Pforge_version_min=54 -Pmod_version=0.4.0+mc1.21.4-forge
 ```
+
+### Minecraft 1.21 needs Forge 51.0.23 or newer
+
+`forge_version_min` exists for one version. Forge 1.21 builds before **51.0.23** bundle **Mixin 0.8.5**,
+whose `CompatibilityLevel` enum stops at `JAVA_17`. This mod's `farlandsreforged.mixins.json` asks for
+`JAVA_21`, so on 51.0.0 the server dies during bootstrap, before any mod loads:
+
+```
+MixinInitialisationError: Mixin config farlandsreforged.mixins.json
+specifies compatibility level JAVA_21 which is not recognised
+```
+
+51.0.23 is the first 1.21 build carrying Mixin 0.8.7, which knows `JAVA_21`. Declaring the dependency as
+`[51,)` would therefore promise something that crashes on arrival, so the jar declares `[51.0.23,)` and
+Forge says *"Mod farlandsreforged requires forge 51.0.23 or above"* instead.
+
+Every other major in the family is fine: 52.0.0 through 61.0.0 all ship Mixin 0.8.7 from their first
+build, checked by reading `version.json` out of each installer. Note that Mixin 0.8.7 stops at `JAVA_21`
+too — which is why the Forge projects declare `JAVA_21` while the Fabric and NeoForge 26.x projects
+declare `JAVA_25`.
 
 | Minecraft | forge_version | forge_loader_major |
 |-----------|---------------|--------------------|
-| 1.21      | 51.0.0        | 51                 |
+| 1.21      | 51.0.23       | 51 (min 51.0.23)   |
 | 1.21.1    | 52.1.16       | 52                 |
 | 1.21.2    | —             | Forge never shipped one |
 | 1.21.3    | 53.1.12       | 53                 |

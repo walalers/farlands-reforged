@@ -81,7 +81,9 @@ Removing the wrap sounds like it should be enough, but it isn't. On its own, mod
 | 1.21 … 1.21.10 | ✅ | ✅ | ✅* |
 
 \* Forge never shipped a 1.21.2 build, so there is no 1.21.2 Forge jar. NeoForge has no stable 26.3 yet,
-so there is no NeoForge 26.3 jar either.
+so there is no NeoForge 26.3 jar either. On Minecraft **1.21**, the Forge jar needs **Forge 51.0.23 or
+newer** — older 51.x builds ship a Mixin too old to read this mod's config and stop the server at
+startup. The jar says so, so Forge tells you instead of crashing.
 
 The 26.x builds need **Java 25**; the 1.21 builds need **Java 21**. On Fabric, Fabric Loader is all you
 need. No Fabric API.

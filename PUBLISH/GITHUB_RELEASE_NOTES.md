@@ -57,7 +57,9 @@ Terrain generation is untouched. A world generated with 0.3.1 generates identica
 | 1.21.11          | ✅     | ✅       | ✅    | 21   |
 | 1.21 … 1.21.10   | ✅     | ✅       | ✅¹   | 21   |
 
-¹ Except 1.21.2 — Forge never shipped a build for it.
+¹ Except 1.21.2 — Forge never shipped a build for it. On Minecraft **1.21**, use **Forge 51.0.23 or
+newer**: earlier 51.x builds ship an old Mixin that cannot read this mod's mixin config, and the server
+stops during startup. The jar declares that requirement, so Forge will tell you rather than crash.
 
 NeoForge has no stable 26.3 yet, so there is no NeoForge 26.3 jar. The NeoForge jars for 1.21.2, 1.21.6,
 1.21.7 and 1.21.9 are built against those versions' beta NeoForge releases, because NeoForge never took

@@ -58,6 +58,7 @@ tasks.named('processResources', ProcessResources).configure {
         minecraft_version_range: minecraft_version_range,
         forge_version          : forge_version,
         forge_loader_major     : forge_loader_major,
+        forge_version_min      : forge_version_min,
         mod_id                 : mod_id,
         mod_name               : mod_name,
         mod_license            : mod_license,
