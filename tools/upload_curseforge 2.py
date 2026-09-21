@@ -37,13 +37,6 @@ LOADER_IDS = {"fabric": 7499, "neoforge": 10150, "forge": 7498}
 # The 1.21 family is Java 21; 26.x is Java 25.
 JAVA_TYPE_ID = 2
 
-# CurseForge requires at least one tag from the "environment" group on every upload, and rejects the
-# whole file with errorCode 1021 without it. This mod is worldgen plus a command, so it belongs on both
-# sides: the terrain mixins run on the server, and the Fabric pack fix also registers the mod's assets
-# as a client resource pack, which is what makes the advancement's title and description display.
-ENVIRONMENT_TYPE_ID = 75208
-ENVIRONMENTS = ("Client", "Server")
-
 
 def java_for(mc):
     return "Java 21" if mc.startswith("1.21") else "Java 25"
@@ -140,19 +133,10 @@ def main():
             problems.append(f"{jar.name}: CurseForge has no {java_name} tag")
             continue
 
-        environment = [e["id"] for name in ENVIRONMENTS
-                       for e in by_name.get(name, [])
-                       if e["gameVersionTypeID"] == ENVIRONMENT_TYPE_ID]
-        if len(environment) != len(ENVIRONMENTS):
-            problems.append(f"{jar.name}: could not resolve the environment tags "
-                            f"{', '.join(ENVIRONMENTS)}")
-            continue
-
         plan.append({
             "jar": jar,
             "displayName": f"Farlands Reforged {args.version} — Minecraft {mc} ({loader.capitalize()})",
-            "gameVersions": sorted({candidates[0]["id"], LOADER_IDS[loader], java[0]["id"],
-                                    *environment}),
+            "gameVersions": sorted({candidates[0]["id"], LOADER_IDS[loader], java[0]["id"]}),
             "mc": mc, "loader": loader, "java": java_name,
         })
 
