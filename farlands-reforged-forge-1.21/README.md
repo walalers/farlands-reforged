@@ -52,7 +52,7 @@ The sources also carry the two 1.21-family differences: `ResourceLocation` inste
 ```bash
 JAVA_HOME=/path/to/jdk-21 ./gradlew build -Pminecraft_version=1.21.4 \
   -Pminecraft_version_range='[1.21.4]' -Pforge_version=54.1.18 -Pforge_loader_major=54 \
-  -Pmod_version=0.3.1+mc1.21.4-forge
+  -Pmod_version=0.4.0+mc1.21.4-forge
 ```
 
 | Minecraft | forge_version | forge_loader_major |

@@ -14,7 +14,7 @@ project with the versions passed on the command line:
 
 ```bash
 ./gradlew build -Pminecraft_version=26.1.2 -Pforge_version=64.0.10 -Pforge_loader_major=64 \
-  "-Pminecraft_version_range=[26.1.2,26.2)" -Pmod_version=0.3.1+mc26.1.2-forge
+  "-Pminecraft_version_range=[26.1.2,26.2)" -Pmod_version=0.4.0+mc26.1.2-forge
 ```
 
 | Minecraft | forge_version | forge_loader_major |

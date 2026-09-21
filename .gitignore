@@ -30,3 +30,6 @@ desktop.ini
 
 mappings/
 intermediary/
+
+# Staging directory for a release build (tools/build_release.sh)
+build-release/

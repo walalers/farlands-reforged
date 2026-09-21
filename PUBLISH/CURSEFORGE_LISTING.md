@@ -1,6 +1,6 @@
 # Farlands Reforged — CurseForge publish pack
 
-Everything here is paste-ready. The `jars/` folder holds the 12 files you upload.
+Everything here is paste-ready. The `jars/` folder holds the 48 files you upload.
 `logo.png` is your 400×400 project logo. Work top-to-bottom and you're live.
 
 ---
@@ -77,8 +77,17 @@ Removing the wrap sounds like it should be enough, but it isn't. On its own, mod
 | 26.1.2    | ✅ | ✅ | ✅ |
 | 26.1.1    | ✅ | ✅ | ✅ |
 | 26.1      | ✅ | ✅ | ✅ |
+| 1.21.11   | ✅ | ✅ | ✅ |
+| 1.21 … 1.21.10 | ✅ | ✅ | ✅* |
 
-You'll need **Java 25**. On Fabric, Fabric Loader is all you need. No Fabric API.
+\* Forge never shipped a 1.21.2 build, so there is no 1.21.2 Forge jar. NeoForge has no stable 26.3 yet,
+so there is no NeoForge 26.3 jar either.
+
+The 26.x builds need **Java 25**; the 1.21 builds need **Java 21**. On Fabric, Fabric Loader is all you
+need. No Fabric API.
+
+Take the jar that names **your exact Minecraft version** — these are not interchangeable. A jar built
+against 1.21.8 will not behave correctly on 1.21.5.
 
 ## Config
 
@@ -101,51 +110,53 @@ MIT licensed. Made by Shigeo. The source is on [GitHub](https://github.com/walal
 
 ---
 
-## 4) Upload the files — settings per jar
+## 4) Upload the files
 
-Upload each jar from the `jars/` folder as a **separate file**. Set **Release type = Release** on all.
-**Java = 25** on all. **No required dependencies on any** (do NOT add Fabric API).
+`tools/upload_curseforge.py` does this over the API rather than by hand — 48 files is too many to click
+through, and each one needs three tags set correctly:
 
-| File | Game Version | Modloader |
-|------|--------------|-----------|
-| `farlandsreforged-0.3.1+mc26.1-fabric.jar`     | 26.1   | Fabric   |
-| `farlandsreforged-0.3.1+mc26.1-neoforge.jar`   | 26.1   | NeoForge |
-| `farlandsreforged-0.3.1+mc26.1.1-fabric.jar`   | 26.1.1 | Fabric   |
-| `farlandsreforged-0.3.1+mc26.1.1-neoforge.jar` | 26.1.1 | NeoForge |
-| `farlandsreforged-0.3.1+mc26.1.2-fabric.jar`   | 26.1.2 | Fabric   |
-| `farlandsreforged-0.3.1+mc26.1.2-neoforge.jar` | 26.1.2 | NeoForge |
-| `farlandsreforged-0.3.1+mc26.2-fabric.jar`     | 26.2   | Fabric   |
-| `farlandsreforged-0.3.1+mc26.2-neoforge.jar`   | 26.2   | NeoForge |
-| `farlandsreforged-0.3.1+mc26.3-fabric.jar`     | 26.3   | Fabric   |
-| `farlandsreforged-0.3.1+mc26.1-forge.jar`     | 26.1   | Forge    |
-| `farlandsreforged-0.3.1+mc26.1.1-forge.jar`   | 26.1.1 | Forge    |
-| `farlandsreforged-0.3.1+mc26.1.2-forge.jar`   | 26.1.2 | Forge    |
-| `farlandsreforged-0.3.1+mc26.2-forge.jar`     | 26.2   | Forge    |
+```bash
+python3 tools/upload_curseforge.py build-release --version 0.4.0 \
+    --changelog PUBLISH/GITHUB_RELEASE_NOTES.md          # dry run, uploads nothing
+python3 tools/upload_curseforge.py ... --go              # actually upload
+```
 
-> If CurseForge's version dropdown doesn't yet list 26.1 or 26.1.1, those tags aren't available to publish
-> against until CurseForge adds them — upload the ones that are present and add the rest when they appear.
+It reads the token from `~/.curseforge-token`, works out each jar's Minecraft version and loader from its
+filename, resolves those to CurseForge's numeric game-version ids, and refuses to upload anything at all if
+a single jar does not resolve. It builds the multipart request itself instead of shelling out to `curl`,
+because `curl -F` truncates a value at the first `;` and the metadata is JSON full of them.
+
+Every file gets **Release type = Release**, no required dependencies (do **not** add Fabric API), and three
+tags: its Minecraft version, its modloader, and its Java version — **Java 21** for the 1.21 family, **Java
+25** for 26.x.
+
+The release is 48 files: Minecraft 1.21 … 1.21.11 on Fabric (12), NeoForge (12) and Forge (11 — Forge never
+shipped a 1.21.2), plus 26.1 / 26.1.1 / 26.1.2 / 26.2 on all three loaders and 26.3 on Fabric. There is no
+NeoForge 26.3 jar: NeoForge has no stable 26.3 yet.
 
 ---
 
-## 5) Changelog (paste into each file's changelog box)
+## 5) Changelog (sent with every file by the upload script)
 
 ```
-Farlands Reforged 0.3.1
+Farlands Reforged 0.4.0
 
-- No modern noodle caves inside the Far Lands: the walls and sheets are solid like Beta's.
-- Includes 0.3.0: authentic Far Lands walls, sheets and tunnels; Beta-style grass, dirt and flooding;
-  no early mountain glitching; no server freeze on arrival.
-- Built for this Minecraft version on Fabric, NeoForge and Forge. Fabric API not required.
+- Minecraft 1.21 - 1.21.11 on Fabric, NeoForge and Forge. Same Far Lands code as the 26.x builds;
+  these need Java 21.
+- The "...where am I?" advancement now works on Fabric. It never had: Fabric Loader does not expose a
+  mod's data directory as a data pack (that is Fabric API, which this mod deliberately does not need),
+  so the advancement JSON was never read and the detector quietly did nothing. Fabric builds now
+  register a built-in pack in code - still no Fabric API dependency. Forge and NeoForge were unaffected.
+- Terrain generation is unchanged: a 0.3.1 world generates identically under 0.4.0.
 ```
 
----
 
 ## 6) Before you flip it public
 
 - **Distribution:** leave third-party distribution **enabled** if you want launchers/modpacks to use it.
 - **Moderation:** your first project + files go through a quick manual CurseForge review before they appear publicly.
-- **Smoke test:** the 26.2 Fabric jar is in-game tested and its worldgen verified headlessly on all four sides
-  and corners. The 26.1 and 26.1.1 jars target identical Minecraft code — a 30-second world-gen check is still
-  worth doing before they're public.
+- **Smoke test:** every Fabric jar in this release was booted on a real Fabric server of its own Minecraft
+  version, and checked for three things: no mixin errors, `/farlands` answers, and `/datapack list` names
+  `farlandsreforged` — the last of which is the bug 0.4.0 fixes. `tools/server_test.py` does this.
 - **Checksums:** `SHA256SUMS.txt` (in `farlands-reforged-releases`) lists hashes for every jar if you want to
   post them for verification.

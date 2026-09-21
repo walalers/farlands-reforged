@@ -171,6 +171,11 @@ the dependency version ranges, and `mod_version`), then rebuild.
 
 ## Changelog
 
+- **0.4.0** — Minecraft **1.21 … 1.21.11** on all three loaders, and the **"...where am I?" advancement now
+  actually works on Fabric**. It never had: Fabric Loader does not turn a mod's `data/` directory into a data
+  pack — that is Fabric API's job, and this mod deliberately does not depend on Fabric API — so the advancement
+  JSON sat unread in every Fabric jar and the detector quietly did nothing. A built-in pack is now registered
+  in code, with no new dependency and no `pack.mcmeta` to go stale. Terrain is unchanged.
 - **0.3.1** — No modern noodle caves inside the Far Lands, so the walls and sheets are solid the way Beta's were.
   Also available for Fabric 26.3, ported to its new world generation engine.
 - **0.3.0** — Authentic Far Lands. Previous versions only unwrapped the noise, which in modern world generation
