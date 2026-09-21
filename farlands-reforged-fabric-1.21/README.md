@@ -34,3 +34,26 @@ version it was built against, even though its source never changes. The break is
 inherited `Level level()` still exists on the newer versions — which is exactly the kind of thing that
 looks fine until somebody runs the wrong jar. `tools/compare_jars.py` in the repository root is what
 catches it: it hashes the compiled classes and groups the jars that really are interchangeable.
+
+## Why `PackRepositoryMixin` exists
+
+Fabric Loader, unlike Forge and NeoForge, does **not** turn a mod's `data/` and `assets/` directories
+into packs - that is Fabric API's resource loader, and this mod deliberately does not depend on Fabric
+API. Without help, `data/farlandsreforged/advancement/farlands/where_am_i.json` is dead weight in the
+jar: the server never reads it, `server.getAdvancements().get(...)` returns null, and `FarlandsEvents`
+silently does nothing. Nothing is logged, the terrain still works perfectly, and the only visible symptom
+is that `/datapack list` shows `vanilla` and nothing else.
+
+`PackRepositoryMixin` adds a built-in pack to every `PackRepository`, which is what Fabric API does
+internally. The pack is assembled from `Pack`'s constructor with hand-written `Pack.Metadata` rather than
+`Pack.readMetaAndCreate`, so no `pack.mcmeta` is needed - deliberately, because `pack_format` numbers
+change nearly every release and a stale one silently drops the pack instead of failing loudly.
+
+Every type it touches - `PackRepository(RepositorySource...)`, `RepositorySource.loadPacks`, `Pack`,
+`Pack.Metadata`, `PackLocationInfo`, `PackSelectionConfig`, `PathPackResources` - is identical across
+1.21 through 1.21.11, checked with `javap` against the Mojang-mapped jar for each version.
+
+**To verify it after a change:** `/datapack list` on a real server must list `farlandsreforged`, and
+rebuilding the jar with the advancement JSON deliberately corrupted must make the server log
+`Couldn't parse data file farlandsreforged:farlands/where_am_i`. Silence there means the pack is not
+being read.
