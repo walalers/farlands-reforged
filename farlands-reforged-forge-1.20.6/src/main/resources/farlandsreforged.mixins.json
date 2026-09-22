@@ -1,0 +1,20 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.shigeo.farlandsreforged.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "BlendedNoiseMixin",
+    "ImprovedNoiseMixin",
+    "RangeChoiceMixin",
+    "SurfaceRulesContextMixin",
+    "NoiseBasedAquiferMixin",
+    "UnderwaterMagmaFeatureMixin",
+    "NoodleCavesMixin",
+    "CommandsMixin",
+    "ServerPlayerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -25,7 +25,6 @@ Usage:
 
 import argparse
 import json
-import os
 import re
 import shutil
 import signal
@@ -38,7 +37,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from rcon import Rcon, RconError  # noqa: E402
-from server_test import (ERROR_PATTERNS, corrupt_advancement, free_port, probe_column,  # noqa: E402
+from server_test import (ERROR_PATTERNS, corrupt_advancement, free_port, java_for, probe_column,  # noqa: E402
                          summarize_column, vanilla_server_jar)
 
 FORGE_MAVEN = "https://maven.minecraftforge.net/net/minecraftforge/forge"
@@ -61,13 +60,6 @@ def args_file(loader, workdir, full_version):
     if loader == "forge":
         return workdir / f"libraries/net/minecraftforge/forge/{full_version}/unix_args.txt"
     return workdir / f"libraries/net/neoforged/neoforge/{full_version}/unix_args.txt"
-
-
-def java_for(mc):
-    home = os.environ.get("JDK21" if mc.startswith("1.21") else "JDK25")
-    if home and Path(home, "bin/java").exists():
-        return str(Path(home, "bin/java"))
-    return "java"
 
 
 def seed_server_jar(installer, mc, workdir, cache):
@@ -166,11 +158,19 @@ def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, p
             except (OSError, RconError) as exc:
                 result["errors"].append(f"rcon: {exc}")
     finally:
-        if process.poll() is None:
+        exit_code = process.poll()
+        if exit_code is None:
             process.send_signal(signal.SIGKILL)
         process.wait(timeout=60)
 
     text = log_path.read_text(errors="replace")
+    if not result["booted"]:
+        # Say why. A server that dies of something ERROR_PATTERNS does not know used to come back as
+        # booted=false with an empty error list, which says nothing about the mod either way.
+        why = (f"server exited with code {exit_code} before booting" if exit_code is not None
+               else f"server did not boot within {boot_timeout:.0f}s")
+        tail = [line.strip()[:200] for line in text.splitlines()[-5:] if line.strip()]
+        result["errors"].append(why + (": " + " | ".join(tail) if tail else " (no output)"))
     for pattern in ERROR_PATTERNS:
         for line in re.findall(rf".*{pattern}.*", text):
             result["errors"].append(line.strip()[:200])

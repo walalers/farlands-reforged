@@ -43,7 +43,10 @@ from rcon import Rcon, RconError  # noqa: E402
 
 MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest_v2.json"
 FABRIC_META = "https://meta.fabricmc.net/v2/versions"
-ADVANCEMENT = "data/farlandsreforged/advancement/farlands/where_am_i.json"
+# Minecraft 1.21 renamed the folder from advancements/ to advancement/; a jar carries whichever its
+# version reads.
+ADVANCEMENTS = {f"data/farlandsreforged/{folder}/farlands/where_am_i.json"
+                for folder in ("advancement", "advancements")}
 
 # Mixin failures are fatal but the server keeps writing for a while, so match the shapes rather than
 # waiting for a crash. "No refMap loaded" is a warning on a healthy server, so it is deliberately not
@@ -116,10 +119,17 @@ def corrupt_advancement(src, dest):
     This is the only loader-independent proof that a data pack is being read: a server that reads it
     logs a parse error, and a server that does not stays completely silent and starts normally.
     """
+    corrupted = 0
     with zipfile.ZipFile(src) as zin, zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as zout:
         for item in zin.infolist():
-            data = b"{ this is not valid json" if item.filename == ADVANCEMENT else zin.read(item.filename)
+            if item.filename in ADVANCEMENTS:
+                data, corrupted = b"{ this is not valid json", corrupted + 1
+            else:
+                data = zin.read(item.filename)
             zout.writestr(item, data)
+    if corrupted != 1:
+        # Corrupting nothing would make a working pack look unread, so refuse rather than mislead.
+        raise SystemExit(f"{src}: expected one where_am_i.json to corrupt, found {corrupted}")
     return dest
 
 
@@ -145,13 +155,20 @@ def probe_column(rcon, x, z, y_min=-64, y_max=319, load_timeout=300):
             raise RconError(f"chunk at {x} {z} never finished generating")
         time.sleep(2)
 
+    # Air by name, not #minecraft:air: that tag only exists from 1.21, and on older versions the test
+    # errors, air falls through to #replaceable, and every air block reads as a plant.
+    tests = ((".", "minecraft:air"), (".", "minecraft:cave_air"), (".", "minecraft:void_air"),
+             ("~", "minecraft:water"), ("~", "minecraft:lava"), (",", "#minecraft:replaceable"))
     column = []
     for y in range(y_max, y_min - 1, -1):
-        for char, test in ((".", "#minecraft:air"), ("~", "minecraft:water"),
-                           ("~", "minecraft:lava"), (",", "#minecraft:replaceable")):
-            if "passed" in rcon.command(f"execute if block {x} {y} {z} {test}"):
+        for char, test in tests:
+            reply = rcon.command(f"execute if block {x} {y} {z} {test}")
+            if "passed" in reply:
                 column.append(char)
                 break
+            if "failed" not in reply:
+                # Anything else is an error (an unknown block or tag), not an answer.
+                raise RconError(f"`execute if block ... {test}` answered {reply!r}")
         else:
             column.append("#")
     return "".join(column)
@@ -167,12 +184,24 @@ def summarize_column(column, y_max=319):
     return " | ".join(runs)
 
 
+DEFAULT_JDKS = {
+    "JDK21": Path.home() / "Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home",
+    "JDK25": Path("/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home"),
+}
+
+
 def java_for(mc):
-    """1.21.x needs Java 21; the 26.x family needs Java 25."""
-    home = os.environ.get("JDK21" if mc.startswith("1.21") else "JDK25")
-    if home and Path(home, "bin/java").exists():
-        return str(Path(home, "bin/java"))
-    return "java"
+    """Minecraft 1.x runs on Java 21; the 26.x family needs Java 25.
+
+    Never falls back to whatever `java` is on the PATH. It used to, and a 1.20.6 Forge server quietly
+    ran on Java 25, where Forge 50.0.0's ASM cannot even read java/lang/Boolean ("Unsupported class
+    file major version 69") - a failure that looks exactly like a broken mod.
+    """
+    var = "JDK21" if mc.startswith("1.") else "JDK25"
+    home = Path(os.environ.get(var) or DEFAULT_JDKS[var])
+    if not (home / "bin/java").exists():
+        raise SystemExit(f"no Java for Minecraft {mc}: set {var} to a JDK home ({home} does not exist)")
+    return str(home / "bin/java")
 
 
 def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, corrupt,

@@ -28,7 +28,6 @@ Things this does because they went wrong once:
 
 import argparse
 import json
-import os
 import shutil
 import sys
 import threading
@@ -47,22 +46,23 @@ import server_test  # noqa: E402
 # vanilla has plain ocean there, so a worldgen mixin that silently failed to apply cannot pass.
 PROBE = (12550850, 0)
 
-FABRIC = ["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8",
-          "1.21.9", "1.21.10", "1.21.11", "26.1", "26.1.1", "26.1.2", "26.2", "26.3"]
+FABRIC = ["1.20.5", "1.20.6", "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6",
+          "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11", "26.1", "26.1.1", "26.1.2", "26.2", "26.3"]
 
-# Loader versions to test against. Mostly the ones build_release.sh builds with; Forge 1.21 is its
-# declared minimum (51.0.23), and NeoForge 26.x uses the newest build of each line. None means "read
-# it from the 1.21.11 project's gradle.properties", which pins its own.
-FORGE = [("1.21", "51.0.23"), ("1.21.1", "52.1.16"), ("1.21.3", "53.1.12"), ("1.21.4", "54.1.18"),
-         ("1.21.5", "55.1.13"), ("1.21.6", "56.0.0"), ("1.21.7", "57.0.0"), ("1.21.8", "58.1.22"),
-         ("1.21.9", "59.0.5"), ("1.21.10", "60.1.15"), ("1.21.11", None), ("26.1", "62.0.9"),
-         ("26.1.1", "63.0.2"), ("26.1.2", "64.1.3"), ("26.2", "65.0.0")]
-NEOFORGE = [("1.21", "21.0.167"), ("1.21.1", "21.1.251"), ("1.21.2", "21.2.1-beta"),
-            ("1.21.3", "21.3.97"), ("1.21.4", "21.4.157"), ("1.21.5", "21.5.98"),
-            ("1.21.6", "21.6.20-beta"), ("1.21.7", "21.7.25-beta"), ("1.21.8", "21.8.54"),
-            ("1.21.9", "21.9.16-beta"), ("1.21.10", "21.10.64"), ("1.21.11", None),
-            ("26.1", "26.1.0.19-beta"), ("26.1.1", "26.1.1.15-beta"), ("26.1.2", "26.1.2.109"),
-            ("26.2", "26.2.0.88")]
+# Loader versions to test against. Mostly the ones build_release.sh builds with; Forge 1.20.6, Forge 1.21
+# and NeoForge 1.20.5 are their declared minimums (50.0.0, 51.0.23, 20.5.14-beta), and NeoForge 26.x
+# uses the newest build of each line. None means "read it from the 1.21.11 project's gradle.properties",
+# which pins its own.
+FORGE = [("1.20.6", "50.0.0"), ("1.21", "51.0.23"), ("1.21.1", "52.1.16"), ("1.21.3", "53.1.12"),
+         ("1.21.4", "54.1.18"), ("1.21.5", "55.1.13"), ("1.21.6", "56.0.0"), ("1.21.7", "57.0.0"),
+         ("1.21.8", "58.1.22"), ("1.21.9", "59.0.5"), ("1.21.10", "60.1.15"), ("1.21.11", None),
+         ("26.1", "62.0.9"), ("26.1.1", "63.0.2"), ("26.1.2", "64.1.3"), ("26.2", "65.0.0")]
+NEOFORGE = [("1.20.5", "20.5.14-beta"), ("1.20.6", "20.6.141"), ("1.21", "21.0.167"),
+            ("1.21.1", "21.1.251"), ("1.21.2", "21.2.1-beta"), ("1.21.3", "21.3.97"),
+            ("1.21.4", "21.4.157"), ("1.21.5", "21.5.98"), ("1.21.6", "21.6.20-beta"),
+            ("1.21.7", "21.7.25-beta"), ("1.21.8", "21.8.54"), ("1.21.9", "21.9.16-beta"),
+            ("1.21.10", "21.10.64"), ("1.21.11", None), ("26.1", "26.1.0.19-beta"),
+            ("26.1.1", "26.1.1.15-beta"), ("26.1.2", "26.1.2.109"), ("26.2", "26.2.0.88")]
 
 PORTS = {"fabric": 25611, "forge": 25621, "neoforge": 25631}  # RCON is each plus 100
 NETWORK_RETRIES = 3
@@ -208,10 +208,6 @@ def main():
     ap.add_argument("--results", type=Path,
                     help="JSON-lines results file (default: <workdir>/results.jsonl)")
     args = ap.parse_args()
-
-    os.environ.setdefault(
-        "JDK21", str(Path.home() / "Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home"))
-    os.environ.setdefault("JDK25", "/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home")
 
     def wanted(loader, mc):
         return not args.only or any(o == loader or o == f"{loader}:{mc}" for o in args.only)

@@ -58,10 +58,11 @@ it, which is why the 1.21 family gets a real build per version rather than one j
 
 ### `build_release.sh <version>` — build everything
 
-Builds all 48 jars — three loaders across Minecraft 1.21 … 1.21.11 and 26.1 … 26.3 — into one staging
-directory. Each project's quirks are baked in: the Fabric and NeoForge projects have no wrapper and use
-a cached Gradle, Forge 1.21–1.21.10 is ForgeGradle 6 and so needs Gradle 8 on Java 21, and Forge numbers
-its major per Minecraft version (26.1 is Forge 62, not 65).
+Builds every jar — three loaders across Minecraft 1.20.5 and 1.20.6, 1.21 … 1.21.11 and 26.1 … 26.3 —
+into one staging directory. Each project's quirks are baked in: the Fabric and NeoForge projects have no
+wrapper and use a cached Gradle, Forge 1.20.6 and 1.21–1.21.10 are ForgeGradle 6 and so need Gradle 8 on
+Java 21, Forge numbers its major per Minecraft version (26.1 is Forge 62, not 65), and NeoForge 1.20.5 is
+retargeted from the 1.20.6 build because ModDevGradle cannot build against NeoForge's 20.5 betas.
 
 ### `retarget_jar.py` — one build, several Minecraft versions
 

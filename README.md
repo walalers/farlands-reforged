@@ -33,14 +33,19 @@ No new blocks, no resource pack, no fuss — just the classic terrain ghost, fai
 | 26.1             | ✅     | ✅       | ✅    | 25   |
 | 1.21.11          | ✅     | ✅       | ✅    | 21   |
 | 1.21 … 1.21.10   | ✅     | ✅       | ✅¹   | 21   |
+| 1.20.6           | ✅     | ✅       | ✅    | 21   |
+| 1.20.5           | ✅     | ✅²      | —     | 21   |
 
 ¹ Except 1.21.2, which Forge never shipped a build for. On Minecraft **1.21** the Forge jar needs
 **Forge 51.0.23 or newer** — earlier 51.x builds bundle Mixin 0.8.5, which does not understand this mod's
 `JAVA_21` mixins and stops the server during bootstrap. NeoForge's 21.2, 21.6, 21.7 and 21.9 never left
 beta, so the 1.21.2, 1.21.6, 1.21.7 and 1.21.9 NeoForge jars are built against those betas.
 
-The 26.x builds need **Java 25**; the 1.21 builds need **Java 21**. Fabric builds need only Fabric Loader —
-**Fabric API is not required** (this mod is mixin-based).
+² NeoForge 1.20.5 never left beta either; the jar needs **20.5.14-beta or newer**, the first build with
+the player tick event it uses. Forge never shipped a 1.20.5 build.
+
+The 26.x builds need **Java 25**; the 1.21 and 1.20 builds need **Java 21**. Fabric builds need only
+Fabric Loader — **Fabric API is not required** (this mod is mixin-based).
 
 ## Download
 
@@ -118,14 +123,17 @@ farlands-reforged-fabric-26.2/        Fabric source for Minecraft 26.2
 farlands-reforged-fabric-26.1.2/      Fabric source for Minecraft 26.1.2
 farlands-reforged-fabric-1.21.11/     Fabric source for Minecraft 1.21.11
 farlands-reforged-fabric-1.21/        Fabric source for Minecraft 1.21 ... 1.21.10
+farlands-reforged-fabric-1.20.6/      Fabric source for Minecraft 1.20.5 and 1.20.6
 farlands-reforged-neoforge-26.3/      NeoForge source for Minecraft 26.3 (NeoForge beta, unreleased)
 farlands-reforged-26.2/               NeoForge source for Minecraft 26.2
 farlands-reforged-neoforge-26.1.2/    NeoForge source for Minecraft 26.1.2
 farlands-reforged-neoforge-1.21.11/   NeoForge source for Minecraft 1.21.11
 farlands-reforged-neoforge-1.21/      NeoForge source for Minecraft 1.21 ... 1.21.10
+farlands-reforged-neoforge-1.20.6/    NeoForge source for Minecraft 1.20.6 (1.20.5 is retargeted)
 farlands-reforged-forge-26.2/         Forge source for Minecraft 26.x (built per version, see its README)
 farlands-reforged-forge-1.21.11/      Forge source for Minecraft 1.21.11 (ForgeGradle 7)
 farlands-reforged-forge-1.21/         Forge source for Minecraft 1.21 ... 1.21.10 (ForgeGradle 6, official names)
+farlands-reforged-forge-1.20.6/       Forge source for Minecraft 1.20.6 (ForgeGradle 6, Mixin 0.8.5)
 tools/                                Scripts that verify a port before the game runs (see tools/README.md)
 PUBLISH/                              Release jars + CurseForge listing assets
 ```

@@ -4,7 +4,8 @@ import os, re, sys, collections
 
 SP = os.path.dirname(os.path.abspath(__file__))
 MAP = os.path.join(SP, 'mappings')
-VERSIONS = ['1.21','1.21.1','1.21.2','1.21.3','1.21.4','1.21.5','1.21.6','1.21.7','1.21.8','1.21.9','1.21.10','1.21.11']
+# Versions come from the command line; with none, the 1.21 family.
+VERSIONS = sys.argv[1:] or ['1.21','1.21.1','1.21.2','1.21.3','1.21.4','1.21.5','1.21.6','1.21.7','1.21.8','1.21.9','1.21.10','1.21.11']
 
 # class -> list of members to look for. A member is (kind, name, matcher)
 TARGETS = {

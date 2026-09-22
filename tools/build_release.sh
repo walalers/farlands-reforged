@@ -4,9 +4,9 @@
 #   tools/build_release.sh 0.4.0 [outdir]
 #
 # The repository ships no Gradle wrapper for the Fabric and NeoForge projects, so they use a cached
-# distribution; the Forge projects have their own wrappers. Forge 1.21-1.21.10 is the odd one out: it
-# is ForgeGradle 6, which means Gradle 8, which cannot run on Java 25, so that project alone gets
-# JAVA_HOME pointed at the JDK 21.
+# distribution; the Forge projects have their own wrappers. Forge 1.20.6 and 1.21-1.21.10 are the odd
+# ones out: they are ForgeGradle 6, which means Gradle 8, which cannot run on Java 25, so those two
+# projects get JAVA_HOME pointed at the JDK 21.
 #
 # 26.1 and 26.1.1 are not built. Every compiled class in the 26.1, 26.1.1, 26.1.2 and 26.2 jars is
 # byte-identical, so those two are retargeted copies of the 26.1.2 build - see tools/retarget_jar.py.
@@ -48,6 +48,22 @@ run() {
 }
 
 gradle_nc() { "$GRADLE_BIN" --no-daemon --console=plain "$@"; }
+
+echo "=== Fabric 1.20.5 / 1.20.6 ==="
+for v in 1.20.5 1.20.6; do
+  run "fabric:$v" farlands-reforged-fabric-1.20.6 \
+    bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test \
+      -Pminecraft_version=$v '-Pminecraft_version_range=$v' -Pmod_version=$VERSION+mc$v-fabric"
+done
+
+echo "=== NeoForge 1.20.6 (1.20.5 is retargeted from it at the end) ==="
+run "neoforge:1.20.6" farlands-reforged-neoforge-1.20.6 \
+  bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc1.20.6-neoforge"
+
+echo "=== Forge 1.20.6 (Forge never shipped a 1.20.5) ==="
+run "forge:1.20.6" farlands-reforged-forge-1.20.6 \
+  env JAVA_HOME="$JDK21" ./gradlew --no-daemon --console=plain clean build -x test \
+    -Pmod_version="$VERSION+mc1.20.6-forge"
 
 echo "=== Fabric 1.21 - 1.21.10 ==="
 for v in 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10; do
@@ -134,7 +150,7 @@ for v in 26.1 26.1.1 26.1.2 26.2; do
 done
 
 echo
-echo "=== Retarget 26.1 / 26.1.1 from the 26.1.2 builds ==="
+echo "=== Retarget 26.1 / 26.1.1 from the 26.1.2 builds, and NeoForge 1.20.5 from 1.20.6 ==="
 python3 "$REPO/tools/retarget_jar.py" --fabric \
   "$OUT/farlandsreforged-$VERSION+mc26.1.2-fabric.jar" "$OUT/farlandsreforged-$VERSION+mc26.1-fabric.jar" \
   --mod-version "$VERSION+mc26.1-fabric" --minecraft '>=26.1 <26.1.1' && BUILT=$((BUILT+1))
@@ -147,6 +163,13 @@ python3 "$REPO/tools/retarget_jar.py" --neoforge \
 python3 "$REPO/tools/retarget_jar.py" --neoforge \
   "$OUT/farlandsreforged-$VERSION+mc26.1.2-neoforge.jar" "$OUT/farlandsreforged-$VERSION+mc26.1.1-neoforge.jar" \
   --mod-version "$VERSION+mc26.1.1-neoforge" --minecraft '[26.1.1,26.1.2)' --loader '[26.1.1,26.1.2)' && BUILT=$((BUILT+1))
+
+# NeoForge 1.20.5 never left beta, and ModDevGradle cannot build against those betas (no moddev-bundle
+# variant was ever published). The 1.20.5 and 1.20.6 classes are identical on Fabric, and every NeoForge
+# class the mod uses exists from 20.5.14-beta, where PlayerTickEvent.Post first appears.
+python3 "$REPO/tools/retarget_jar.py" --neoforge \
+  "$OUT/farlandsreforged-$VERSION+mc1.20.6-neoforge.jar" "$OUT/farlandsreforged-$VERSION+mc1.20.5-neoforge.jar" \
+  --mod-version "$VERSION+mc1.20.5-neoforge" --minecraft '[1.20.5]' --loader '[20.5.14-beta,20.6)' && BUILT=$((BUILT+1))
 
 echo
 echo "=== $BUILT jars in $OUT ==="

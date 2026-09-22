@@ -22,6 +22,7 @@ Usage:
 import argparse
 import json
 import re
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -47,8 +48,18 @@ WORLDGEN_MIXINS = [
 FABRIC_REQUIRED = ["CommandsMixin", "ServerPlayerMixin", "PackRepositoryMixin"]
 FABRIC_CLASSES = ["FarlandsModPack"]
 
-ADVANCEMENT = "data/farlandsreforged/advancement/farlands/where_am_i.json"
 LANG = "assets/farlandsreforged/lang/en_us.json"
+
+
+def mc_tuple(mc):
+    return tuple(int(part) for part in mc.split("."))
+
+
+def advancement_path(mc):
+    # Minecraft 1.21 renamed the plural data-pack folders (advancements/ -> advancement/). A jar with
+    # the wrong one boots fine and the advancement just never registers.
+    folder = "advancements" if mc_tuple(mc) < (1, 21) else "advancement"
+    return f"data/farlandsreforged/{folder}/farlands/where_am_i.json"
 
 
 def loader_of(name):
@@ -98,6 +109,15 @@ def audit(path, version):
         if got != want:
             problems.append(f"declares version {got!r}, filename says {want!r}")
 
+        # 1b. NeoForge 20.x (Minecraft 1.20.x) ships FancyModLoader 3; 21.x and later ship 4+. A jar
+        #     asking for [4,) on 1.20.x is refused before any of it runs.
+        if loader == "neoforge" and mc_tuple(expected_mc) < (1, 21):
+            toml = zf.read("META-INF/neoforge.mods.toml").decode("utf-8")
+            match = re.search(r'^\s*loaderVersion\s*=\s*"([^"]+)"', toml, re.M)
+            if not match or match.group(1) != "[3,)":
+                problems.append(f"loaderVersion {match and match.group(1)!r}; NeoForge for 1.20.x "
+                                "ships FML 3, so it must be [3,)")
+
         # 2. Mixin config must list the right mixins, and each must be present as a class.
         config = [n for n in names if n.endswith("farlandsreforged.mixins.json")]
         if not config:
@@ -117,6 +137,22 @@ def audit(path, version):
             for mixin in listed:
                 if f"{CLASS_ROOT}/mixin/{mixin}.class" not in names:
                     problems.append(f"mixins.json lists {mixin}, which is not in the jar")
+            # Every Forge 1.20.6 build bundles Mixin 0.8.5, which knows no level past JAVA_17 and
+            # kills the server during bootstrap on anything higher. (Forge 1.21 had the same Mixin
+            # before 51.0.23, which is why that jar declares [51.0.23,).)
+            level = json.loads(zf.read(config[0])).get("compatibilityLevel")
+            if loader == "forge" and mc_tuple(expected_mc) < (1, 21) and level != "JAVA_17":
+                problems.append(f"compatibilityLevel {level}; Forge before 1.21 has Mixin 0.8.5, "
+                                "which stops at JAVA_17")
+            # The same Mixin 0.8.5 (NeoForge 20.x bundles it too) rejects a static handler inside an
+            # instance method, and both @Redirect targets are instance methods.
+            if loader != "fabric" and mc_tuple(expected_mc) < (1, 21):
+                for mixin in ("BlendedNoiseMixin", "ImprovedNoiseMixin"):
+                    listing = subprocess.run(
+                        ["javap", "-p", "-cp", str(path), f"com.shigeo.farlandsreforged.mixin.{mixin}"],
+                        capture_output=True, text=True).stdout
+                    if re.search(r"\bstatic\b[^\n]*farlandsreforged\$", listing):
+                        problems.append(f"{mixin} has a static handler, which Mixin 0.8.5 rejects")
             # The pack fix is Fabric-only; on Forge and NeoForge the loader does this itself.
             if loader != "fabric" and "PackRepositoryMixin" in listed:
                 problems.append("PackRepositoryMixin present on a non-Fabric jar")
@@ -130,8 +166,8 @@ def audit(path, version):
                 problems.append(f"{cls} present on a non-Fabric jar")
 
         # 4. The advertised content has to actually be in there.
-        if ADVANCEMENT not in names:
-            problems.append("no where_am_i advancement JSON")
+        if advancement_path(expected_mc) not in names:
+            problems.append(f"no {advancement_path(expected_mc)}")
         if LANG not in names:
             problems.append("no en_us.json lang file")
 
@@ -142,9 +178,9 @@ def audit(path, version):
                 problems.append("Forge jar has no pack.mcmeta - its data pack is silently dropped")
             else:
                 meta = json.loads(zf.read("pack.mcmeta"))["pack"]
-                old_family = expected_mc.startswith("1.21") and expected_mc != "1.21.11"
+                old_family = mc_tuple(expected_mc) < (1, 21, 11)
                 if old_family and "supported_formats" not in meta:
-                    problems.append("pack.mcmeta lacks supported_formats, which 1.21-1.21.10 needs")
+                    problems.append("pack.mcmeta lacks supported_formats, which pre-1.21.11 needs")
                 if not old_family and not ({"min_format", "max_format"} & set(meta)):
                     problems.append("pack.mcmeta lacks min_format/max_format")
         elif "pack.mcmeta" in names:
