@@ -37,7 +37,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from rcon import Rcon, RconError  # noqa: E402
-from server_test import ERROR_PATTERNS, corrupt_advancement, free_port  # noqa: E402
+from server_test import (ERROR_PATTERNS, corrupt_advancement, free_port, probe_column,  # noqa: E402
+                         summarize_column)
 
 FORGE_MAVEN = "https://maven.minecraftforge.net/net/minecraftforge/forge"
 NEOFORGE_MAVEN = "https://maven.neoforged.net/releases/net/neoforged/neoforge"
@@ -96,7 +97,7 @@ def install(loader, mc, loader_version, workdir, cache, java):
 
 
 def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, password,
-             boot_timeout, corrupt):
+             boot_timeout, corrupt, probe=None):
     workdir.mkdir(parents=True, exist_ok=True)
     (workdir / "mods").mkdir(exist_ok=True)
     java = java_for(mc)
@@ -143,6 +144,8 @@ def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, p
                 with Rcon("127.0.0.1", rcon_port, password, timeout=60) as rcon:
                     result["farlands"] = rcon.command("farlands")
                     result["datapack"] = rcon.command("datapack list")
+                    if probe:
+                        result["column"] = probe_column(rcon, *probe)
             except (OSError, RconError) as exc:
                 result["errors"].append(f"rcon: {exc}")
     finally:
@@ -157,6 +160,8 @@ def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, p
     # Forge lists the pack as `mod:farlandsreforged`; NeoForge merges mod data into one `mod_data`.
     listing = result["datapack"]
     result["pack_listed"] = "farlandsreforged" in listing or "mod_data" in listing
+    # Any reply counts as an answer, "Unknown or incomplete command" included, so check it is ours.
+    result["command_ok"] = "Farlands Reforged" in result["farlands"]
     result["parse_error"] = "farlandsreforged:farlands/where_am_i" in text and "arse" in text
     return result
 
@@ -174,6 +179,8 @@ def main():
     ap.add_argument("--password", default="farlands")
     ap.add_argument("--boot-timeout", type=float, default=600)
     ap.add_argument("--corrupt-advancement", action="store_true")
+    ap.add_argument("--probe", nargs=2, type=int, metavar=("X", "Z"),
+                    help="read this terrain column block by block (see server_test.probe_column)")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
@@ -184,7 +191,7 @@ def main():
 
     result = run_test(args.loader, args.mc, args.loader_version, args.jar, workdir, args.cache,
                       args.port, args.rcon_port, args.password, args.boot_timeout,
-                      args.corrupt_advancement)
+                      args.corrupt_advancement, args.probe)
 
     if args.json:
         print(json.dumps(result))
@@ -192,12 +199,14 @@ def main():
         log(f"  booted      : {result['booted']}")
         log(f"  /farlands   : {result['farlands'][:120].strip() or '(no answer)'}")
         log(f"  pack listed : {result['pack_listed']}   ({result['datapack'][:90].strip()})")
+        if "column" in result:
+            log(f"  column      : {summarize_column(result['column'])}")
         if args.corrupt_advancement:
             log(f"  parse error : {result['parse_error']}  (must be True)")
         for error in result["errors"][:5]:
             log(f"  ERROR       : {error}")
 
-    ok = result["booted"] and result["farlands"] and not result["errors"]
+    ok = result["booted"] and result["command_ok"] and not result["errors"]
     ok = ok and (result["parse_error"] if args.corrupt_advancement else result["pack_listed"])
     return 0 if ok else 1
 

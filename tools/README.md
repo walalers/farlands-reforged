@@ -97,6 +97,13 @@ advancement JSON: a server that really reads the pack logs a parse error, and on
 silent. That is the only loader-independent proof, because the pack's name in `/datapack list` differs
 per loader.
 
+`--probe X Z` adds the terrain half: it forceloads that column and reads it block by block over RCON
+(`execute if block`), as air, fluid, plant or solid. A worldgen mixin that silently fails to apply leaves
+a server that passes every other check, so this is what proves the shipped jar actually makes Far Lands.
+At `--probe 12550850 0` on seed 1234, vanilla is ocean (water from y=62 to 48, then seabed); with the mod
+the column holds solid layers up to y=222, flooded between them. `/farlands` must also answer with the
+mod's own text - a bare "Unknown or incomplete command" is a reply too, and used to count as one.
+
 ### `modded_server_test.py --loader forge|neoforge ...` — the same, for the other two loaders
 
 Forge and NeoForge servers are installed rather than launched, so they get their own script. This matters

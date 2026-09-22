@@ -10,6 +10,10 @@
 #
 # 26.1 and 26.1.1 are not built. Every compiled class in the 26.1, 26.1.1, 26.1.2 and 26.2 jars is
 # byte-identical, so those two are retargeted copies of the 26.1.2 build - see tools/retarget_jar.py.
+#
+# Every build is `clean build`. The repository sits under ~/Desktop, which iCloud Drive syncs, and iCloud
+# resolves a conflict by leaving a copy such as "farlandsreforged 2/" beside the original - inside build/
+# too. A build that reuses build/ sweeps those copies into the jar without any error.
 set -uo pipefail
 
 VERSION="${1:?usage: build_release.sh <version> [outdir]}"
@@ -48,13 +52,13 @@ gradle_nc() { "$GRADLE_BIN" --no-daemon --console=plain "$@"; }
 echo "=== Fabric 1.21 - 1.21.10 ==="
 for v in 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10; do
   run "fabric:$v" farlands-reforged-fabric-1.21 \
-    bash -c "'$GRADLE_BIN' --no-daemon --console=plain build -x test \
+    bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test \
       -Pminecraft_version=$v '-Pminecraft_version_range=$v' -Pmod_version=$VERSION+mc$v-fabric"
 done
 
 echo "=== Fabric 1.21.11 ==="
 run "fabric:1.21.11" farlands-reforged-fabric-1.21.11 \
-  bash -c "'$GRADLE_BIN' --no-daemon --console=plain build -x test -Pmod_version=$VERSION+mc1.21.11-fabric"
+  bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc1.21.11-fabric"
 
 echo "=== NeoForge 1.21 - 1.21.10 ==="
 nf_for() { case "$1" in
@@ -67,14 +71,14 @@ nf_for() { case "$1" in
 for v in 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10; do
   read -r nfv nfr <<< "$(nf_for "$v")"
   run "neoforge:$v" farlands-reforged-neoforge-1.21 \
-    bash -c "'$GRADLE_BIN' --no-daemon --console=plain build -x test \
+    bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test \
       -Pminecraft_version=$v '-Pminecraft_version_range=[$v]' \
       -Pneoforge_version=$nfv '-Pneoforge_version_range=$nfr' -Pmod_version=$VERSION+mc$v-neoforge"
 done
 
 echo "=== NeoForge 1.21.11 ==="
 run "neoforge:1.21.11" farlands-reforged-neoforge-1.21.11 \
-  bash -c "'$GRADLE_BIN' --no-daemon --console=plain build -x test -Pmod_version=$VERSION+mc1.21.11-neoforge"
+  bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc1.21.11-neoforge"
 
 echo "=== Forge 1.21 - 1.21.10 (no 1.21.2; Forge never shipped one) ==="
 # Third field is the minimum Forge the jar declares. It is normally just the major, but Minecraft
@@ -89,7 +93,7 @@ fg_for() { case "$1" in
 for v in 1.21 1.21.1 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10; do
   read -r fv fm fmin <<< "$(fg_for "$v")"
   run "forge:$v" farlands-reforged-forge-1.21 \
-    env JAVA_HOME="$JDK21" ./gradlew --no-daemon --console=plain build -x test \
+    env JAVA_HOME="$JDK21" ./gradlew --no-daemon --console=plain clean build -x test \
       -Pminecraft_version="$v" "-Pminecraft_version_range=[$v]" \
       -Pforge_version="$fv" -Pforge_loader_major="$fm" -Pforge_version_min="$fmin" \
       -Pmod_version="$VERSION+mc$v-forge"
@@ -97,21 +101,21 @@ done
 
 echo "=== Forge 1.21.11 ==="
 run "forge:1.21.11" farlands-reforged-forge-1.21.11 \
-  ./gradlew --no-daemon --console=plain build -x test -Pmod_version="$VERSION+mc1.21.11-forge"
+  ./gradlew --no-daemon --console=plain clean build -x test -Pmod_version="$VERSION+mc1.21.11-forge"
 
 echo "=== Fabric 26.x ==="
 run "fabric:26.1.2" farlands-reforged-fabric-26.1.2 \
-  bash -c "'$GRADLE_BIN' --no-daemon --console=plain build -x test -Pmod_version=$VERSION+mc26.1.2-fabric"
+  bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc26.1.2-fabric"
 run "fabric:26.2" farlands-reforged-fabric-26.2 \
-  bash -c "'$GRADLE_BIN' --no-daemon --console=plain build -x test -Pmod_version=$VERSION+mc26.2-fabric"
+  bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc26.2-fabric"
 run "fabric:26.3" farlands-reforged-fabric-26.3 \
-  bash -c "'$GRADLE_BIN' --no-daemon --console=plain build -x test -Pmod_version=$VERSION+mc26.3-fabric"
+  bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc26.3-fabric"
 
 echo "=== NeoForge 26.x ==="
 run "neoforge:26.1.2" farlands-reforged-neoforge-26.1.2 \
-  bash -c "'$GRADLE_BIN' --no-daemon --console=plain build -x test -Pmod_version=$VERSION+mc26.1.2-neoforge"
+  bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc26.1.2-neoforge"
 run "neoforge:26.2" farlands-reforged-26.2 \
-  bash -c "'$GRADLE_BIN' --no-daemon --console=plain build -x test -Pmod_version=$VERSION+mc26.2-neoforge"
+  bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc26.2-neoforge"
 
 echo "=== Forge 26.x ==="
 # Forge numbers its major per Minecraft version, and mods.toml is built from the major alone, so each
@@ -124,7 +128,7 @@ fx_for() { case "$1" in
 for v in 26.1 26.1.1 26.1.2 26.2; do
   read -r fv fm fr <<< "$(fx_for "$v")"
   run "forge:$v" farlands-reforged-forge-26.2 \
-    ./gradlew --no-daemon --console=plain build -x test \
+    ./gradlew --no-daemon --console=plain clean build -x test \
       -Pminecraft_version="$v" "-Pminecraft_version_range=$fr" \
       -Pforge_version="$fv" -Pforge_loader_major="$fm" -Pmod_version="$VERSION+mc$v-forge"
 done

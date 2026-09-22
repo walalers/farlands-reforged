@@ -33,3 +33,11 @@ intermediary/
 
 # Staging directory for a release build (tools/build_release.sh)
 build-release/
+
+# iCloud Drive syncs ~/Desktop, where this repository lives, and resolves a sync conflict by leaving a
+# copy such as "build 2.gradle" or "farlandsreforged 2/" beside the original. One commit swept 42 of
+# them in, including three .java copies that stop the Fabric 26.x projects compiling from a clean clone.
+* [0-9]
+* [0-9].*
+* [0-9][0-9]
+* [0-9][0-9].*

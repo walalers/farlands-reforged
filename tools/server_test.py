@@ -128,6 +128,45 @@ def free_port(port):
         return probe.connect_ex(("127.0.0.1", port)) != 0
 
 
+def probe_column(rcon, x, z, y_min=-64, y_max=319, load_timeout=300):
+    """Read one column of generated terrain over RCON, top down, as a string with one character per
+    block: '.' air, '~' water or lava, ',' a plant or other replaceable block, '#' anything solid.
+
+    This proves the terrain half of the mod on the shipped jar, which the other checks cannot: a
+    worldgen mixin that silently fails to apply leaves a server that boots, answers `/farlands` and
+    lists the pack perfectly. Only vanilla commands are used, so it works the same on every loader.
+    Plants get their own class because two Minecraft versions on one seed disagree about seagrass
+    and flowers, but never about where the walls are.
+    """
+    rcon.command(f"forceload add {x} {z}")
+    deadline = time.time() + load_timeout
+    while "passed" not in rcon.command(f"execute if loaded {x} 0 {z}"):
+        if time.time() > deadline:
+            raise RconError(f"chunk at {x} {z} never finished generating")
+        time.sleep(2)
+
+    column = []
+    for y in range(y_max, y_min - 1, -1):
+        for char, test in ((".", "#minecraft:air"), ("~", "minecraft:water"),
+                           ("~", "minecraft:lava"), (",", "#minecraft:replaceable")):
+            if "passed" in rcon.command(f"execute if block {x} {y} {z} {test}"):
+                column.append(char)
+                break
+        else:
+            column.append("#")
+    return "".join(column)
+
+
+def summarize_column(column, y_max=319):
+    """Run-length form of probe_column's output, e.g. '. 319..178 | # 177..94 | . 93..64 ...'."""
+    runs, start = [], 0
+    for i in range(1, len(column) + 1):
+        if i == len(column) or column[i] != column[start]:
+            runs.append(f"{column[start]} {y_max - start}..{y_max - i + 1}")
+            start = i
+    return " | ".join(runs)
+
+
 def java_for(mc):
     """1.21.x needs Java 21; the 26.x family needs Java 25."""
     home = os.environ.get("JDK21" if mc.startswith("1.21") else "JDK25")
@@ -137,7 +176,7 @@ def java_for(mc):
 
 
 def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, corrupt,
-             forceload=None, settle=90):
+             forceload=None, settle=90, probe=None):
     workdir.mkdir(parents=True, exist_ok=True)
     (workdir / "mods").mkdir(exist_ok=True)
 
@@ -186,6 +225,8 @@ def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, c
                 with Rcon("127.0.0.1", rcon_port, password, timeout=120) as rcon:
                     result["farlands"] = rcon.command("farlands")
                     result["datapack"] = rcon.command("datapack list")
+                    if probe:
+                        result["column"] = probe_column(rcon, *probe)
                     if forceload:
                         # Generate a patch of the Far Lands so region_slice.py has chunks to read.
                         # forceload generates them in the background, so give it time and then flush
@@ -207,6 +248,8 @@ def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, c
         for line in re.findall(rf".*{pattern}.*", text):
             result["errors"].append(line.strip()[:200])
     result["pack_listed"] = "farlandsreforged" in result["datapack"]
+    # Any reply counts as an answer, "Unknown or incomplete command" included, so check it is ours.
+    result["command_ok"] = "Farlands Reforged" in result["farlands"]
     result["parse_error"] = "farlandsreforged:farlands/where_am_i" in text and "arse" in text
     return result
 
@@ -226,6 +269,8 @@ def main():
                     help="generate this block region, so its chunks land in the region files")
     ap.add_argument("--settle", type=float, default=90,
                     help="seconds to let forceload finish generating before saving")
+    ap.add_argument("--probe", nargs=2, type=int, metavar=("X", "Z"),
+                    help="read this terrain column block by block (see probe_column)")
     ap.add_argument("--json", action="store_true", help="print the result as one JSON line")
     args = ap.parse_args()
 
@@ -236,7 +281,7 @@ def main():
 
     result = run_test(args.mc, args.jar, workdir, args.cache, args.port, args.rcon_port,
                       args.password, args.boot_timeout, args.corrupt_advancement,
-                      args.forceload, args.settle)
+                      args.forceload, args.settle, args.probe)
 
     if args.json:
         print(json.dumps(result))
@@ -244,12 +289,14 @@ def main():
         log(f"  booted      : {result['booted']}")
         log(f"  /farlands   : {result['farlands'][:120].strip() or '(no answer)'}")
         log(f"  pack listed : {result['pack_listed']}")
+        if "column" in result:
+            log(f"  column      : {summarize_column(result['column'])}")
         if args.corrupt_advancement:
             log(f"  parse error : {result['parse_error']}  (must be True - proves the pack is read)")
         for error in result["errors"][:5]:
             log(f"  ERROR       : {error}")
 
-    ok = result["booted"] and result["farlands"] and not result["errors"]
+    ok = result["booted"] and result["command_ok"] and not result["errors"]
     ok = ok and (result["parse_error"] if args.corrupt_advancement else result["pack_listed"])
     return 0 if ok else 1
 
