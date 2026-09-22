@@ -53,6 +53,15 @@ CHECKS = {
     },
 }
 
+# Minecraft 1.18.2 predates two shapes the checks above assume: DensityFunction.NoiseHolder arrived in 1.19
+# (before it, DensityFunctions$Noise holds the noise key itself), and so did CommandBuildContext. The
+# 1.18.2 projects are written against these instead. The version comes from Loom's cache directory name
+# ("<version>-loom.mappings...").
+_version = re.match(r'(\d+(?:\.\d+)*)', os.path.basename(os.path.dirname(os.path.abspath(JAR))))
+if _version and tuple(int(p) for p in _version.group(1).split('.')) < (1, 19):
+    CHECKS['net/minecraft/world/level/levelgen/DensityFunctions$Noise']['fields'] = ['net.minecraft.core.Holder<net.minecraft.world.level.levelgen.synth.NormalNoise$NoiseParameters> noiseData']
+    CHECKS['net/minecraft/commands/Commands']['methods'] = ['Commands(net.minecraft.commands.Commands$CommandSelection)']
+
 tmp = tempfile.mkdtemp()
 with zipfile.ZipFile(JAR) as zf:
     names = zf.namelist()

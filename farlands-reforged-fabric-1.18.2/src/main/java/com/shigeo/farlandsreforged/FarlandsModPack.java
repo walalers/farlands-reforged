@@ -3,7 +3,7 @@ package com.shigeo.farlandsreforged;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.metadata.ModOrigin;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.packs.FilePackResources;
 import net.minecraft.server.packs.FolderPackResources;
 import net.minecraft.server.packs.PackResources;
@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  * {@code getAdvancement(...)} returns null, and {@link FarlandsEvents} silently does nothing. No error is
  * ever logged, which is why only a {@code /datapack list} shows the problem.
  *
- * <p>This is the 1.19 - 1.19.2 shape of the pack API, which 1.18.2 shares. There is no
+ * <p>This is the 1.18.2 - 1.19.2 shape of the pack API, the oldest this mod supports. There is no
  * {@code PathPackResources}: vanilla reads packs only from a {@link File}, a zip through
  * {@link FilePackResources} or a directory through {@link FolderPackResources}. So the pack points at
  * the jar Fabric loaded this mod from, not at the jar's internal root path. {@code Pack} is built from its
@@ -48,7 +48,7 @@ public final class FarlandsModPack {
             return;
         }
 
-        // The metadata is given in code below, so the pack has no pack.mcmeta - and on 1.19 - 1.19.2 both
+        // The metadata is given in code below, so the pack has no pack.mcmeta - and on 1.18.2 - 1.19.2 both
         // readers throw rather than return null for a missing one. Every resource reload asks each pack
         // for its "filter" section, so without these overrides the server logs "Failed to get filter
         // section from pack" as an ERROR each time, although the pack loads fine.
@@ -71,8 +71,8 @@ public final class FarlandsModPack {
                 FarlandsReforged.MOD_ID,
                 true,
                 resources,
-                Component.literal("Farlands Reforged"),
-                Component.literal("Farlands Reforged resources"),
+                new TextComponent("Farlands Reforged"),
+                new TextComponent("Farlands Reforged resources"),
                 PackCompatibility.COMPATIBLE,
                 Pack.Position.TOP,
                 true,

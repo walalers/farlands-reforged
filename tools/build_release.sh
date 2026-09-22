@@ -49,6 +49,14 @@ run() {
 
 gradle_nc() { "$GRADLE_BIN" --no-daemon --console=plain "$@"; }
 
+# Minecraft 1.18.2: Fabric and Forge only, each its own project (pre-1.19 text, command and noise APIs).
+echo "=== Fabric / Forge 1.18.2 ==="
+run "fabric:1.18.2" farlands-reforged-fabric-1.18.2 \
+  bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc1.18.2-fabric"
+run "forge:1.18.2" farlands-reforged-forge-1.18.2 \
+  env JAVA_HOME="$JDK21" ./gradlew --no-daemon --console=plain clean build -x test \
+    -Pmod_version="$VERSION+mc1.18.2-forge"
+
 # Minecraft 1.19 - 1.19.4 runs on Java 17 too, and has no NeoForge at all (NeoForge begins at 1.20.1).
 # Fabric's pack API splits it into two projects: 1.19 - 1.19.2 read packs only from a java.io.File. Forge
 # needs no pack code, so one project covers the family, with one reobfuscated build per version and that

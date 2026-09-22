@@ -1,6 +1,6 @@
 # Farlands Reforged — Fabric 1.19 / 1.19.1 / 1.19.2
 
-Fabric build for **Minecraft 1.19, 1.19.1 and 1.19.2**, the oldest this mod supports. It is
+Fabric build for **Minecraft 1.19, 1.19.1 and 1.19.2**. It is
 `farlands-reforged-fabric-1.19.4` with the oldest pack API and one missing command method:
 
 - **Packs are read from a `java.io.File`.** There is no `PathPackResources`: vanilla has

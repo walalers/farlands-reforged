@@ -46,15 +46,15 @@ import server_test  # noqa: E402
 # vanilla has plain ocean there, so a worldgen mixin that silently failed to apply cannot pass.
 PROBE = (12550850, 0)
 
-FABRIC = ["1.19", "1.19.1", "1.19.2", "1.19.3", "1.19.4", "1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6", "1.21", "1.21.1", "1.21.2",
+FABRIC = ["1.18.2", "1.19", "1.19.1", "1.19.2", "1.19.3", "1.19.4", "1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6", "1.21", "1.21.1", "1.21.2",
           "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11", "26.1",
           "26.1.1", "26.1.2", "26.2", "26.3"]
 
-# Loader versions to test against. Mostly the ones build_release.sh builds with; every 1.19.x and 1.20.x entry,
+# Loader versions to test against. Mostly the ones build_release.sh builds with; every 1.18.2, 1.19.x and 1.20.x entry,
 # and Forge 1.21 (51.0.23), is the declared minimum - the oldest build a jar promises to run on is where
 # a missing method or an older bundled Mixin shows up. NeoForge 26.x uses the newest build of each line.
 # None means "read it from the 1.21.11 project's gradle.properties", which pins its own.
-FORGE = [("1.19", "41.0.1"), ("1.19.1", "42.0.0"), ("1.19.2", "43.0.0"), ("1.19.3", "44.0.0"),
+FORGE = [("1.18.2", "40.0.0"), ("1.19", "41.0.1"), ("1.19.1", "42.0.0"), ("1.19.2", "43.0.0"), ("1.19.3", "44.0.0"),
          ("1.19.4", "45.0.0"), ("1.20", "46.0.1"), ("1.20.1", "47.0.0"), ("1.20.2", "48.0.0"), ("1.20.3", "49.0.1"),
          ("1.20.4", "49.0.3"), ("1.20.6", "50.0.0"), ("1.21", "51.0.23"), ("1.21.1", "52.1.16"),
          ("1.21.3", "53.1.12"), ("1.21.4", "54.1.18"), ("1.21.5", "55.1.13"), ("1.21.6", "56.0.0"),

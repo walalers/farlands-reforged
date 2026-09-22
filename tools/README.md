@@ -58,7 +58,7 @@ it, which is why the 1.21 family gets a real build per version rather than one j
 
 ### `build_release.sh <version>` — build everything
 
-Builds every jar — Fabric and Forge for Minecraft 1.19 … 1.19.4, three loaders across 1.20 … 1.20.6,
+Builds every jar — Fabric and Forge for Minecraft 1.18.2 and 1.19 … 1.19.4, three loaders across 1.20 … 1.20.6,
 1.21 … 1.21.11 and 26.1 … 26.3 —
 into one staging directory. Each project's quirks are baked in: the Fabric and NeoForge projects have no
 wrapper and use a cached Gradle, Forge 1.20.6 and 1.21–1.21.10 are ForgeGradle 6 and so need Gradle 8 on
@@ -97,8 +97,8 @@ the data-pack fix, and nothing failed loudly — the advancement simply never re
 
 `verify_injections.py` covers the worldgen mixins and predates the Fabric data-pack fix. This does the
 same job for that code: every constructor, field and method `FarlandsModPack` and `PackRepositoryMixin`
-name, disassembled out of each version's Minecraft jar. The API changed shape five times since 1.19 —
-1.19 – 1.19.2 (packs read from a `java.io.File`), 1.19.3 – 1.19.4, 1.20 / 1.20.1, 1.20.2 – 1.20.4, and
+name, disassembled out of each version's Minecraft jar. The API changed shape five times since 1.18.2 —
+1.18.2 – 1.19.2 (packs read from a `java.io.File`), 1.19.3 – 1.19.4, 1.20 / 1.20.1, 1.20.2 – 1.20.4, and
 1.20.5 on — and the script picks the check list for each jar's version.
 
 ### `server_test.py --mc V --jar J` — does it work on a real server?

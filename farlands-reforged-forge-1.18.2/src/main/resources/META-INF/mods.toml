@@ -1,0 +1,28 @@
+modLoader="javafml"
+loaderVersion="[${forge_loader_major},)"
+license="${mod_license}"
+issueTrackerURL="https://github.com/walalers/farlands-reforged/issues"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+displayURL="https://github.com/walalers/farlands-reforged"
+authors="${mod_authors}"
+description='''${mod_description}'''
+
+[[dependencies.farlandsreforged]]
+    modId="forge"
+    mandatory=true
+    # [40,) here. The property exists for Forge 1.21, whose builds before 51.0.23 bundle Mixin
+    # 0.8.5; every 1.18.2 build does, so the mixin config declares JAVA_17 here instead.
+    versionRange="[${forge_version_min},)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.farlandsreforged]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"

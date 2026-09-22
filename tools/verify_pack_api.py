@@ -36,7 +36,7 @@ COMMON = [
     (f"{REPO}.PackSource", "sig", "BUILT_IN"),
 ]
 
-# 1.19 - 1.19.2: the oldest shape. PackRepository takes a Pack.PackConstructor (its PackType constructor
+# 1.18.2 - 1.19.2: the oldest shape. PackRepository takes a Pack.PackConstructor (its PackType constructor
 # delegates to that one, which is the one the mixin hooks), loadPacks passes one too, and there is no
 # PathPackResources - packs are read from a java.io.File, a zip or a directory. Pack is built from its
 # constructor with the compatibility given directly.

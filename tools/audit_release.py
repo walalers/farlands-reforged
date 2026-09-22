@@ -49,9 +49,9 @@ FABRIC_REQUIRED = ["CommandsMixin", "ServerPlayerMixin", "PackRepositoryMixin"]
 FABRIC_CLASSES = ["FarlandsModPack"]
 
 LANG = "assets/farlandsreforged/lang/en_us.json"
-# (resource, data) pack formats of each 1.19.x version, from its version.json. Forge 1.19.x builds
-# write both into pack.mcmeta.
-FORGE_119_PACK_FORMATS = {"1.19": (9, 10), "1.19.1": (9, 10), "1.19.2": (9, 10),
+# (resource, data) pack formats of each version before 1.20, from its version.json. Forge builds for
+# them write both into pack.mcmeta.
+FORGE_OLD_PACK_FORMATS = {"1.18.2": (8, 9), "1.19": (9, 10), "1.19.1": (9, 10), "1.19.2": (9, 10),
                           "1.19.3": (12, 10), "1.19.4": (13, 12)}
 
 
@@ -228,8 +228,8 @@ def audit(path, version):
                 meta = json.loads(zf.read("pack.mcmeta"))["pack"]
                 # Before 1.20 the format changed inside the family, so each build carries its own
                 # version's numbers, in vanilla's key and in Forge's forge:*_pack_format keys.
-                if expected_mc in FORGE_119_PACK_FORMATS:
-                    resource, data = FORGE_119_PACK_FORMATS[expected_mc]
+                if expected_mc in FORGE_OLD_PACK_FORMATS:
+                    resource, data = FORGE_OLD_PACK_FORMATS[expected_mc]
                     got = (meta.get("pack_format"), meta.get("forge:resource_pack_format"),
                            meta.get("forge:data_pack_format"))
                     if got != (data, resource, data):
