@@ -115,6 +115,18 @@ The data pack's name differs per loader — Forge lists `mod:farlandsreforged`, 
 into one pack called `mod_data` — so a missing name is not always a failure. `--corrupt-advancement` is
 the check that does not care which loader it is talking to.
 
+### `release_server_test.py <dir> --version V` — every jar, on a real server
+
+Runs the two scripts above over a whole release: three lanes, one per loader, side by side. Every jar
+gets the mixin-error scan, `/farlands`, `/datapack list` and `--probe 12550850 0`; every NeoForge jar
+also gets the corrupted-advancement boot. At the end it prints a pass/fail per jar and checks that all
+the Far Lands columns match. All 48 jars of 0.4.0 took about 2.5 hours and came back identical.
+
+`--only neoforge` or `--only forge:1.21 fabric:26.2` reruns a subset. Vanilla server jars are
+downloaded first, one at a time, and seeded into each Forge/NeoForge install so no two installers fetch
+one at once; each install is deleted after its test, keeping only its logs; and a download that fails on
+a network error is retried instead of being reported as a broken jar.
+
 ### `client_test.sh <project>` — the client side
 
 Everything else here tests dedicated servers. The Fabric pack fix also adds its pack to the client's

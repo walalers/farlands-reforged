@@ -33,12 +33,13 @@ import subprocess
 import sys
 import time
 import urllib.request
+import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from rcon import Rcon, RconError  # noqa: E402
 from server_test import (ERROR_PATTERNS, corrupt_advancement, free_port, probe_column,  # noqa: E402
-                         summarize_column)
+                         summarize_column, vanilla_server_jar)
 
 FORGE_MAVEN = "https://maven.minecraftforge.net/net/minecraftforge/forge"
 NEOFORGE_MAVEN = "https://maven.neoforged.net/releases/net/neoforged/neoforge"
@@ -69,6 +70,21 @@ def java_for(mc):
     return "java"
 
 
+def seed_server_jar(installer, mc, workdir, cache):
+    """Put a checksum-verified vanilla server jar where the installer will look for it, so it never
+    downloads its own. Installers running side by side have corrupted that download ("Downloading
+    minecraft server failed, invalid checksum"). The path comes from the installer itself because it
+    differs by loader: Forge wants `server-<mc>-bundled.jar`, NeoForge `server-<mc>.jar`.
+    """
+    with zipfile.ZipFile(installer) as z:
+        path = json.loads(z.read("install_profile.json")).get("serverJarPath")
+    if not path:
+        return
+    dest = workdir / path.replace("{LIBRARY_DIR}", "libraries").replace("{MINECRAFT_VERSION}", mc)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(vanilla_server_jar(mc, cache), dest)
+
+
 def install(loader, mc, loader_version, workdir, cache, java):
     url, full = installer_url(loader, mc, loader_version)
     installer = cache / Path(url).name
@@ -84,6 +100,7 @@ def install(loader, mc, loader_version, workdir, cache, java):
     if marker.exists():
         return full
 
+    seed_server_jar(installer, mc, workdir, cache)
     log(f"    installing {loader} server (this pulls libraries; allow a few minutes)")
     # Installing several Minecraft servers at the same time corrupts the downloads - the piston-data
     # server jar comes back with an invalid checksum. Run these one at a time.
