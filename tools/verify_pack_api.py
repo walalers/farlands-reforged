@@ -36,6 +36,37 @@ COMMON = [
     (f"{REPO}.PackSource", "sig", "BUILT_IN"),
 ]
 
+# 1.19 - 1.19.2: the oldest shape. PackRepository takes a Pack.PackConstructor (its PackType constructor
+# delegates to that one, which is the one the mixin hooks), loadPacks passes one too, and there is no
+# PathPackResources - packs are read from a java.io.File, a zip or a directory. Pack is built from its
+# constructor with the compatibility given directly.
+CHECKS_1_19 = [
+    (f"{REPO}.PackRepository", "sig", f"PackRepository({REPO}.Pack$PackConstructor, {REPO}.RepositorySource...)"),
+    (f"{REPO}.PackRepository", "sig", f"PackRepository({PACKS}.PackType, {REPO}.RepositorySource...)"),
+    (f"{REPO}.PackRepository", "sig", "java.util.Set<net.minecraft.server.packs.repository.RepositorySource> sources"),
+    (f"{REPO}.RepositorySource", "sig", f"loadPacks(java.util.function.Consumer<{REPO}.Pack>, {REPO}.Pack$PackConstructor)"),
+    (f"{REPO}.Pack", "sig", f"Pack(java.lang.String, boolean, java.util.function.Supplier<{PACKS}.PackResources>, net.minecraft.network.chat.Component, net.minecraft.network.chat.Component, {REPO}.PackCompatibility, {REPO}.Pack$Position, boolean, {REPO}.PackSource)"),
+    (f"{REPO}.PackCompatibility", "sig", "COMPATIBLE"),
+    (f"{REPO}.Pack$Position", "sig", "TOP"),
+    (f"{REPO}.PackSource", "sig", "BUILT_IN"),
+    (f"{PACKS}.FilePackResources", "sig", "FilePackResources(java.io.File)"),
+    (f"{PACKS}.FolderPackResources", "sig", "FolderPackResources(java.io.File)"),
+    (f"{PACKS}.AbstractPackResources", "impl", f"{PACKS}.PackResources"),
+    # Overridden to return null: the pack has no pack.mcmeta, and these readers throw for a missing one.
+    (f"{PACKS}.AbstractPackResources", "sig", f"public <T> T getMetadataSection({PACKS}.metadata.MetadataSectionSerializer<T>)"),
+]
+
+# 1.19.3 - 1.19.4: the 1.20 - 1.20.1 API, except that the pack format comes from the compile-time
+# SharedConstants.DATA_PACK_FORMAT - getPackVersion takes com.mojang.bridge's PackType on 1.19.3.
+CHECKS_1_19_3 = COMMON + [
+    (f"{REPO}.Pack", "sig", f"Pack create(java.lang.String, net.minecraft.network.chat.Component, boolean, {REPO}.Pack$ResourcesSupplier, {REPO}.Pack$Info, {PACKS}.PackType, {REPO}.Pack$Position, boolean, {REPO}.PackSource)"),
+    (f"{REPO}.Pack$Info", "sig", "Info(net.minecraft.network.chat.Component, int, net.minecraft.world.flag.FeatureFlagSet)"),
+    (f"{REPO}.Pack$ResourcesSupplier", "sig", f"{PACKS}.PackResources open(java.lang.String)"),
+    (f"{PACKS}.PathPackResources", "sig", "PathPackResources(java.lang.String, java.nio.file.Path, boolean)"),
+    ("net.minecraft.SharedConstants", "sig", "public static final int DATA_PACK_FORMAT"),
+    (f"{PACKS}.PackType", "sig", "SERVER_DATA"),
+]
+
 # 1.20 - 1.20.1: Pack.create takes a PackType, Pack.Info carries a raw format number, and there is no
 # PathResourcesSupplier - the supplier is a single open(name) method.
 CHECKS_1_20 = COMMON + [
@@ -91,8 +122,12 @@ def version_of(jar):
 
 
 def checks_for(version):
-    """The pack API changed shape twice within 1.20.x; FarlandsModPack has a version for each."""
+    """The pack API changed shape twice within 1.19.x and twice more within 1.20.x; FarlandsModPack has a version for each."""
     parts = tuple(int(p) for p in re.findall(r"\d+", version)[:3])
+    if parts < (1, 19, 3):
+        return CHECKS_1_19
+    if parts < (1, 20):
+        return CHECKS_1_19_3
     if parts < (1, 20, 2):
         return CHECKS_1_20
     if parts < (1, 20, 5):

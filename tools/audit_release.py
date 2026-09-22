@@ -49,6 +49,10 @@ FABRIC_REQUIRED = ["CommandsMixin", "ServerPlayerMixin", "PackRepositoryMixin"]
 FABRIC_CLASSES = ["FarlandsModPack"]
 
 LANG = "assets/farlandsreforged/lang/en_us.json"
+# (resource, data) pack formats of each 1.19.x version, from its version.json. Forge 1.19.x builds
+# write both into pack.mcmeta.
+FORGE_119_PACK_FORMATS = {"1.19": (9, 10), "1.19.1": (9, 10), "1.19.2": (9, 10),
+                          "1.19.3": (12, 10), "1.19.4": (13, 12)}
 
 
 def mc_tuple(mc):
@@ -222,6 +226,15 @@ def audit(path, version):
                 problems.append("Forge jar has no pack.mcmeta - its data pack is silently dropped")
             else:
                 meta = json.loads(zf.read("pack.mcmeta"))["pack"]
+                # Before 1.20 the format changed inside the family, so each build carries its own
+                # version's numbers, in vanilla's key and in Forge's forge:*_pack_format keys.
+                if expected_mc in FORGE_119_PACK_FORMATS:
+                    resource, data = FORGE_119_PACK_FORMATS[expected_mc]
+                    got = (meta.get("pack_format"), meta.get("forge:resource_pack_format"),
+                           meta.get("forge:data_pack_format"))
+                    if got != (data, resource, data):
+                        problems.append(f"pack.mcmeta formats {got}; Minecraft {expected_mc} is "
+                                        f"resource {resource} / data {data}")
                 # supported_formats exists from 1.20.2 (pack format 18) until 1.21.11 replaced it.
                 old_family = mc_tuple(expected_mc) < (1, 21, 11)
                 if (1, 20, 2) <= mc_tuple(expected_mc) and old_family and "supported_formats" not in meta:

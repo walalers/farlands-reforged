@@ -1,0 +1,62 @@
+plugins {
+    id 'fabric-loom' version '1.17.12'
+    id 'maven-publish'
+}
+
+// Every property below can be overridden on the command line, e.g.
+//   gradle build -Pminecraft_version=1.20.5 -Pminecraft_version_range=1.20.5 -Pmod_version=0.4.0+mc1.20.5-fabric
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net/' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    // 1.20.x jars are obfuscated, unlike the 26.x ones; map them with Mojang's own official names, which are
+    // what this mod's sources are written against.
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+}
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(java_version as int) }
+}
+
+processResources {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            fabric_loader_version  : fabric_loader_version,
+            fabric_loader_range    : fabric_loader_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
+            java_version           : java_version
+    ]
+    inputs.properties replaceProperties
+    filesMatching(['fabric.mod.json']) { expand replaceProperties }
+}
+
+jar {
+    manifest {
+        attributes([
+                'Specification-Title'     : mod_id,
+                'Specification-Vendor'    : mod_authors,
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : project.jar.archiveVersion,
+                'Implementation-Vendor'   : mod_authors,
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}

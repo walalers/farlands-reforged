@@ -1,0 +1,32 @@
+package com.shigeo.farlandsreforged.mixin;
+
+import com.shigeo.farlandsreforged.FarlandsConfig;
+import com.shigeo.farlandsreforged.FarlandsRegion;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
+import net.minecraft.world.level.levelgen.feature.UnderwaterMagmaFeature;
+import net.minecraft.world.level.levelgen.feature.configurations.UnderwaterMagmaConfiguration;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+/**
+ * Vanilla scatters magma on the floor of flooded caves (44-52 attempts per chunk in most overworld biomes). The
+ * Far Lands are flooded from bedrock to sea level, so nearly every attempt succeeds and each magma block grows a
+ * bubble column up through ~100 blocks of water, queueing thousands of block ticks per chunk. Beta had no magma,
+ * so the feature is skipped inside the Far Lands.
+ */
+@Mixin(UnderwaterMagmaFeature.class)
+public abstract class UnderwaterMagmaFeatureMixin {
+    @Inject(method = "place", at = @At("HEAD"), cancellable = true)
+    private void farlandsreforged$skipInFarlands(FeaturePlaceContext<UnderwaterMagmaConfiguration> context, CallbackInfoReturnable<Boolean> cir) {
+        if (!FarlandsConfig.terrainEnabled()) {
+            return;
+        }
+        BlockPos origin = context.origin();
+        if (FarlandsRegion.isInFarlands(origin.getX(), origin.getZ())) {
+            cir.setReturnValue(false);
+        }
+    }
+}

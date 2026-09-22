@@ -138,6 +138,28 @@ def free_port(port):
         return probe.connect_ex(("127.0.0.1", port)) != 0
 
 
+# The blocks of 1.20's #minecraft:replaceable tag, copied from the 1.20 server jar, less the air
+# variants, water and lava, which the probe tests first. "grass" became short_grass only in 1.20.3.
+REPLACEABLE_BEFORE_1_20 = ("grass", "fern", "dead_bush", "seagrass", "tall_seagrass", "fire", "soul_fire",
+                           "snow", "vine", "glow_lichen", "light", "tall_grass", "large_fern",
+                           "structure_void", "bubble_column", "warped_roots", "nether_sprouts",
+                           "crimson_roots", "hanging_roots")
+
+
+def chunk_loaded(rcon, x, z):
+    """True once the chunk holding (x, z) is loaded and generated.
+
+    `execute if loaded` only exists from 1.19.4; before that it is a syntax error, which once made every
+    1.19 - 1.19.3 terrain probe time out on a chunk that had long since generated. There, any block test
+    answers "That position is not loaded" until the chunk is loaded, and passes or fails after.
+    """
+    reply = rcon.command(f"execute if loaded {x} 0 {z}")
+    if "passed" in reply or "failed" in reply:
+        return "passed" in reply
+    reply = rcon.command(f"execute if block {x} 0 {z} minecraft:air")
+    return "passed" in reply or "failed" in reply
+
+
 def probe_column(rcon, x, z, y_min=-64, y_max=319, load_timeout=300):
     """Read one column of generated terrain over RCON, top down, as a string with one character per
     block: '.' air, '~' water or lava, ',' a plant or other replaceable block, '#' anything solid.
@@ -150,7 +172,7 @@ def probe_column(rcon, x, z, y_min=-64, y_max=319, load_timeout=300):
     """
     rcon.command(f"forceload add {x} {z}")
     deadline = time.time() + load_timeout
-    while "passed" not in rcon.command(f"execute if loaded {x} 0 {z}"):
+    while not chunk_loaded(rcon, x, z):
         if time.time() > deadline:
             raise RconError(f"chunk at {x} {z} never finished generating")
         time.sleep(2)
@@ -159,6 +181,9 @@ def probe_column(rcon, x, z, y_min=-64, y_max=319, load_timeout=300):
     # errors, air falls through to #replaceable, and every air block reads as a plant.
     tests = ((".", "minecraft:air"), (".", "minecraft:cave_air"), (".", "minecraft:void_air"),
              ("~", "minecraft:water"), ("~", "minecraft:lava"), (",", "#minecraft:replaceable"))
+    # #minecraft:replaceable itself only exists from 1.20. Before that, test its members by name.
+    if "Unknown block tag" in rcon.command(f"execute if block {x} 0 {z} #minecraft:replaceable"):
+        tests = tests[:-1] + tuple((",", f"minecraft:{name}") for name in REPLACEABLE_BEFORE_1_20)
     column = []
     for y in range(y_max, y_min - 1, -1):
         for char, test in tests:

@@ -58,7 +58,8 @@ it, which is why the 1.21 family gets a real build per version rather than one j
 
 ### `build_release.sh <version>` — build everything
 
-Builds every jar — three loaders across Minecraft 1.20.5 and 1.20.6, 1.21 … 1.21.11 and 26.1 … 26.3 —
+Builds every jar — Fabric and Forge for Minecraft 1.19 … 1.19.4, three loaders across 1.20 … 1.20.6,
+1.21 … 1.21.11 and 26.1 … 26.3 —
 into one staging directory. Each project's quirks are baked in: the Fabric and NeoForge projects have no
 wrapper and use a cached Gradle, Forge 1.20.6 and 1.21–1.21.10 are ForgeGradle 6 and so need Gradle 8 on
 Java 21, Forge numbers its major per Minecraft version (26.1 is Forge 62, not 65), and NeoForge 1.20.5 is
@@ -96,8 +97,9 @@ the data-pack fix, and nothing failed loudly — the advancement simply never re
 
 `verify_injections.py` covers the worldgen mixins and predates the Fabric data-pack fix. This does the
 same job for that code: every constructor, field and method `FarlandsModPack` and `PackRepositoryMixin`
-name, disassembled out of each version's Minecraft jar. The API changed shape twice inside 1.20.x — 1.20 /
-1.20.1, 1.20.2 – 1.20.4, and 1.20.5 on — and the script picks the check list for each jar's version.
+name, disassembled out of each version's Minecraft jar. The API changed shape five times since 1.19 —
+1.19 – 1.19.2 (packs read from a `java.io.File`), 1.19.3 – 1.19.4, 1.20 / 1.20.1, 1.20.2 – 1.20.4, and
+1.20.5 on — and the script picks the check list for each jar's version.
 
 ### `server_test.py --mc V --jar J` — does it work on a real server?
 
@@ -117,6 +119,11 @@ a server that passes every other check, so this is what proves the shipped jar a
 At `--probe 12550850 0` on seed 1234, vanilla is ocean (water from y=62 to 48, then seabed); with the mod
 the column holds solid layers up to y=222, flooded between them. `/farlands` must also answer with the
 mod's own text - a bare "Unknown or incomplete command" is a reply too, and used to count as one.
+
+The probe uses only commands every supported version has, and two of the obvious ones are newer than
+they look: `execute if loaded` arrives in 1.19.4 (before it, the probe waits for a block test to stop
+answering "That position is not loaded"), and `#minecraft:replaceable` in 1.20 (before it, the tag's
+members are tested by name). Either one missing used to fail every 1.19 probe on terrain that was fine.
 
 ### `modded_server_test.py --loader forge|neoforge ...` — the same, for the other two loaders
 

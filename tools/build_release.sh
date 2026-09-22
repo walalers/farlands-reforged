@@ -49,6 +49,37 @@ run() {
 
 gradle_nc() { "$GRADLE_BIN" --no-daemon --console=plain "$@"; }
 
+# Minecraft 1.19 - 1.19.4 runs on Java 17 too, and has no NeoForge at all (NeoForge begins at 1.20.1).
+# Fabric's pack API splits it into two projects: 1.19 - 1.19.2 read packs only from a java.io.File. Forge
+# needs no pack code, so one project covers the family, with one reobfuscated build per version and that
+# version's pack formats in pack.mcmeta.
+echo "=== Fabric 1.19 - 1.19.4 ==="
+for v in 1.19 1.19.1 1.19.2; do
+  run "fabric:$v" farlands-reforged-fabric-1.19.2 \
+    bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test \
+      -Pminecraft_version=$v '-Pminecraft_version_range=$v' -Pmod_version=$VERSION+mc$v-fabric"
+done
+for v in 1.19.3 1.19.4; do
+  run "fabric:$v" farlands-reforged-fabric-1.19.4 \
+    bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test \
+      -Pminecraft_version=$v '-Pminecraft_version_range=$v' -Pmod_version=$VERSION+mc$v-fabric"
+done
+
+echo "=== Forge 1.19 - 1.19.4 (SRG at runtime: reobf + refmap) ==="
+# <forge build> <forge major> <resource pack format> <data pack format>
+fo19_for() { case "$1" in
+  1.19) echo "41.1.0 41 9 10";; 1.19.1) echo "42.0.9 42 9 10";; 1.19.2) echo "43.5.2 43 9 10";;
+  1.19.3) echo "44.1.23 44 12 10";; 1.19.4) echo "45.4.5 45 13 12";; esac; }
+for v in 1.19 1.19.1 1.19.2 1.19.3 1.19.4; do
+  read -r fv fm rf df <<< "$(fo19_for "$v")"
+  run "forge:$v" farlands-reforged-forge-1.19.4 \
+    env JAVA_HOME="$JDK21" ./gradlew --no-daemon --console=plain clean build -x test \
+      -Pminecraft_version="$v" "-Pminecraft_version_range=[$v]" \
+      -Pforge_version="$fv" -Pforge_loader_major="$fm" -Pforge_version_min="$fm" \
+      -Presource_pack_format="$rf" -Pdata_pack_format="$df" \
+      -Pmod_version="$VERSION+mc$v-forge"
+done
+
 # Minecraft 1.20 - 1.20.4 runs on Java 17, so these jars are compiled for it (their toolchain is 17;
 # Gradle itself still runs on 21). The advancement and pack APIs split them into two projects per
 # loader: 1.20/1.20.1 has no AdvancementHolder and an older pack API.

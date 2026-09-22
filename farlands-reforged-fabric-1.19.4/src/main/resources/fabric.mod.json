@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${mod_name}",
+  "description": "${mod_description}",
+  "authors": ["${mod_authors}"],
+  "contact": {
+    "sources": "https://github.com/walalers/farlands-reforged",
+    "issues": "https://github.com/walalers/farlands-reforged/issues"
+  },
+  "license": "${mod_license}",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.shigeo.farlandsreforged.FarlandsReforged"]
+  },
+  "mixins": ["farlandsreforged.mixins.json"],
+  "depends": {
+    "fabricloader": "${fabric_loader_range}",
+    "minecraft": "${minecraft_version_range}",
+    "java": ">=${java_version}"
+  }
+}
