@@ -70,6 +70,18 @@ Every compiled class in the 26.1, 26.1.1, 26.1.2 and 26.2 jars is byte-identical
 Fabric and NeoForge jars are copies of the 26.1.2 build with two lines of metadata rewritten. Only sound
 while the classes really do match — check with `compare_jars.py` first.
 
+That covers the Minecraft side only. When the loader versions differ too — the NeoForge 1.20.2, 1.20.3 and
+1.20.5 jars are retargets of builds against a newer NeoForge — also run `verify_loader_api.py`.
+
+### `verify_loader_api.py <jar> --neoforge V...` — does every loader call exist in that version?
+
+Resolves every NeoForge / FancyModLoader / event-bus method and field the jar references, with its exact
+descriptor and through the class hierarchy, against the jars of each NeoForge version given (fetched from
+Maven and cached). Checking that the *classes* exist is not enough: the NeoForge 1.20.4 build retargeted
+to 20.2 and 20.3 had every class it needed, but `ModConfigSpec.BooleanValue.getAsBoolean()` only arrives
+in 20.4, and those servers died during mod loading. Run it against every build in a jar's declared range;
+the 1.20.2 – 1.20.4 check covered all 330 NeoForge 20.2 – 20.4 builds.
+
 ### `audit_release.py <dir> --version V` — check the release as a whole
 
 Each project's `scripts/verify_artifact.py` checks one jar in detail; this checks the set. Filename
@@ -84,7 +96,8 @@ the data-pack fix, and nothing failed loudly — the advancement simply never re
 
 `verify_injections.py` covers the worldgen mixins and predates the Fabric data-pack fix. This does the
 same job for that code: every constructor, field and method `FarlandsModPack` and `PackRepositoryMixin`
-name, disassembled out of each version's Minecraft jar.
+name, disassembled out of each version's Minecraft jar. The API changed shape twice inside 1.20.x — 1.20 /
+1.20.1, 1.20.2 – 1.20.4, and 1.20.5 on — and the script picks the check list for each jar's version.
 
 ### `server_test.py --mc V --jar J` — does it work on a real server?
 
@@ -115,6 +128,22 @@ separate bugs that left the Forge jars completely unloadable were each found onl
 The data pack's name differs per loader — Forge lists `mod:farlandsreforged`, NeoForge merges everything
 into one pack called `mod_data` — so a missing name is not always a failure. `--corrupt-advancement` is
 the check that does not care which loader it is talking to.
+
+Old installers need help, and the script gives it automatically:
+
+- **`authserver.mojang.com` no longer resolves**, and installers from before Mojang retired it (NeoForge
+  20.4.0-beta, for one) look it up for a diagnostic and crash. On that failure the install is retried with
+  `-Djdk.net.hosts.file` pointing at the installer's download hosts, resolved beforehand.
+- **Forge 49.0.x writes a shim jar** (`forge-<ver>-shim.jar`, started with `-jar`) instead of
+  `unix_args.txt`; the launcher uses whichever the install produced.
+- **An installer's embedded library can fail its own checksum** (NeoForge 20.4.0-beta's universal jar),
+  and the installer then gives up rather than downloading it. The Maven copy is seeded first, only if it
+  matches the profile's SHA-1.
+- **NeoForge for Minecraft 1.20.1** is published as `net.neoforged:forge` (a fork of Forge 47) and runs
+  the Forge 1.20.1 jar; `--loader neoforge --mc 1.20.1` installs it.
+
+Each server runs on the Java its Minecraft version ships with: 17 before 1.20.5, 21 up to 1.21.11, 25
+for 26.x (`server_test.java_for`, which refuses rather than fall back to whatever `java` is on the PATH).
 
 ### `release_server_test.py <dir> --version V` — every jar, on a real server
 

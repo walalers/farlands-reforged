@@ -49,6 +49,39 @@ run() {
 
 gradle_nc() { "$GRADLE_BIN" --no-daemon --console=plain "$@"; }
 
+# Minecraft 1.20 - 1.20.4 runs on Java 17, so these jars are compiled for it (their toolchain is 17;
+# Gradle itself still runs on 21). The advancement and pack APIs split them into two projects per
+# loader: 1.20/1.20.1 has no AdvancementHolder and an older pack API.
+echo "=== Fabric 1.20 - 1.20.4 ==="
+for v in 1.20 1.20.1; do
+  run "fabric:$v" farlands-reforged-fabric-1.20.1 \
+    bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test \
+      -Pminecraft_version=$v '-Pminecraft_version_range=$v' -Pmod_version=$VERSION+mc$v-fabric"
+done
+for v in 1.20.2 1.20.3 1.20.4; do
+  run "fabric:$v" farlands-reforged-fabric-1.20.4 \
+    bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test \
+      -Pminecraft_version=$v '-Pminecraft_version_range=$v' -Pmod_version=$VERSION+mc$v-fabric"
+done
+
+echo "=== NeoForge 1.20.4 (1.20.2 and 1.20.3 are retargeted from it at the end) ==="
+run "neoforge:1.20.4" farlands-reforged-neoforge-1.20.4 \
+  bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc1.20.4-neoforge"
+
+echo "=== Forge 1.20 - 1.20.4 (SRG at runtime: reobf + refmap) ==="
+fo_for() { case "$1" in
+  1.20) echo "46.0.14 46 farlands-reforged-forge-1.20.1";; 1.20.1) echo "47.4.10 47 farlands-reforged-forge-1.20.1";;
+  1.20.2) echo "48.1.0 48 farlands-reforged-forge-1.20.4";; 1.20.3) echo "49.0.2 49 farlands-reforged-forge-1.20.4";;
+  1.20.4) echo "49.2.0 49 farlands-reforged-forge-1.20.4";; esac; }
+for v in 1.20 1.20.1 1.20.2 1.20.3 1.20.4; do
+  read -r fv fm dir <<< "$(fo_for "$v")"
+  run "forge:$v" "$dir" \
+    env JAVA_HOME="$JDK21" ./gradlew --no-daemon --console=plain clean build -x test \
+      -Pminecraft_version="$v" "-Pminecraft_version_range=[$v]" \
+      -Pforge_version="$fv" -Pforge_loader_major="$fm" -Pforge_version_min="$fm" \
+      -Pmod_version="$VERSION+mc$v-forge"
+done
+
 echo "=== Fabric 1.20.5 / 1.20.6 ==="
 for v in 1.20.5 1.20.6; do
   run "fabric:$v" farlands-reforged-fabric-1.20.6 \
@@ -163,6 +196,16 @@ python3 "$REPO/tools/retarget_jar.py" --neoforge \
 python3 "$REPO/tools/retarget_jar.py" --neoforge \
   "$OUT/farlandsreforged-$VERSION+mc26.1.2-neoforge.jar" "$OUT/farlandsreforged-$VERSION+mc26.1.1-neoforge.jar" \
   --mod-version "$VERSION+mc26.1.1-neoforge" --minecraft '[26.1.1,26.1.2)' --loader '[26.1.1,26.1.2)' && BUILT=$((BUILT+1))
+
+# NeoForge 1.20.2 and 1.20.3: ModDevGradle cannot build against 20.2/20.3 (no moddev-bundle), and the
+# Minecraft side compiles identically across 1.20.2-1.20.4. tools/verify_loader_api.py checks the
+# NeoForge side - every method the jar calls - against each release in these ranges.
+python3 "$REPO/tools/retarget_jar.py" --neoforge \
+  "$OUT/farlandsreforged-$VERSION+mc1.20.4-neoforge.jar" "$OUT/farlandsreforged-$VERSION+mc1.20.2-neoforge.jar" \
+  --mod-version "$VERSION+mc1.20.2-neoforge" --minecraft '[1.20.2]' --loader '[20.2.86,20.3)' && BUILT=$((BUILT+1))
+python3 "$REPO/tools/retarget_jar.py" --neoforge \
+  "$OUT/farlandsreforged-$VERSION+mc1.20.4-neoforge.jar" "$OUT/farlandsreforged-$VERSION+mc1.20.3-neoforge.jar" \
+  --mod-version "$VERSION+mc1.20.3-neoforge" --minecraft '[1.20.3]' --loader '[20.3.1-beta,20.4)' && BUILT=$((BUILT+1))
 
 # NeoForge 1.20.5 never left beta, and ModDevGradle cannot build against those betas (no moddev-bundle
 # variant was ever published). The 1.20.5 and 1.20.6 classes are identical on Fabric, and every NeoForge

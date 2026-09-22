@@ -185,19 +185,23 @@ def summarize_column(column, y_max=319):
 
 
 DEFAULT_JDKS = {
+    "JDK17": Path.home() / "Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home",
     "JDK21": Path.home() / "Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home",
     "JDK25": Path("/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home"),
 }
 
 
 def java_for(mc):
-    """Minecraft 1.x runs on Java 21; the 26.x family needs Java 25.
+    """The Java each Minecraft version ships with: 17 before 1.20.5, 21 up to 1.21.11, 25 for 26.x.
+
+    Testing on the oldest Java a version supports is the point - that is what its players run.
 
     Never falls back to whatever `java` is on the PATH. It used to, and a 1.20.6 Forge server quietly
     ran on Java 25, where Forge 50.0.0's ASM cannot even read java/lang/Boolean ("Unsupported class
     file major version 69") - a failure that looks exactly like a broken mod.
     """
-    var = "JDK21" if mc.startswith("1.") else "JDK25"
+    parts = tuple(int(p) for p in mc.split("."))
+    var = "JDK17" if parts < (1, 20, 5) else "JDK21" if parts[0] == 1 else "JDK25"
     home = Path(os.environ.get(var) or DEFAULT_JDKS[var])
     if not (home / "bin/java").exists():
         raise SystemExit(f"no Java for Minecraft {mc}: set {var} to a JDK home ({home} does not exist)")

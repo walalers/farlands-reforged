@@ -24,10 +24,12 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import re
 import shutil
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -48,17 +50,43 @@ def log(message):
     print(message, flush=True)
 
 
+# NeoForge's Minecraft 1.20.1 builds (47.1.x) are a fork of Forge 47, published as net.neoforged:forge
+# rather than net.neoforged:neoforge. They still load Forge 1.20.1 mods, which is how this mod supports
+# them - with the Forge jar.
+NEOFORGE_1_20_1_MAVEN = "https://maven.neoforged.net/releases/net/neoforged/forge"
+
+
 def installer_url(loader, mc, loader_version):
     if loader == "forge":
         full = f"{mc}-{loader_version}"
         return f"{FORGE_MAVEN}/{full}/forge-{full}-installer.jar", full
+    if mc == "1.20.1":
+        full = f"{mc}-{loader_version}"
+        return f"{NEOFORGE_1_20_1_MAVEN}/{full}/forge-{full}-installer.jar", full
     return (f"{NEOFORGE_MAVEN}/{loader_version}/neoforge-{loader_version}-installer.jar",
             loader_version)
+
+
+def launch_args(loader, workdir, full_version):
+    """What goes after `java -Xmx2G` to start the installed server.
+
+    Almost every installer writes a JVM args file. Forge 49.0.x (Minecraft 1.20.3 and early 1.20.4)
+    instead writes a shim jar that is started with -jar, and no args file at all.
+    """
+    args = args_file(loader, workdir, full_version)
+    if args.exists():
+        return [f"@{args.relative_to(workdir)}"]
+    shim = workdir / f"{'forge' if loader == 'forge' else 'neoforge'}-{full_version}-shim.jar"
+    if shim.exists():
+        return ["-jar", shim.name]
+    return None
 
 
 def args_file(loader, workdir, full_version):
     if loader == "forge":
         return workdir / f"libraries/net/minecraftforge/forge/{full_version}/unix_args.txt"
+    if full_version.startswith("1.20.1-"):
+        return workdir / f"libraries/net/neoforged/forge/{full_version}/unix_args.txt"
     return workdir / f"libraries/net/neoforged/neoforge/{full_version}/unix_args.txt"
 
 
@@ -77,6 +105,31 @@ def seed_server_jar(installer, mc, workdir, cache):
     shutil.copy(vanilla_server_jar(mc, cache), dest)
 
 
+def seed_bad_embedded_libraries(installer, workdir):
+    """Some installers ship a library inside themselves (under maven/) that does not match the checksum
+    in their own profile - NeoForge 20.4.0-beta's universal jar does - and they then fail instead of
+    downloading it. Put the Maven copy in place first, but only if it matches the profile's SHA-1, so
+    the installer finds a valid file and skips the extraction."""
+    with zipfile.ZipFile(installer) as z:
+        profile = json.loads(z.read("install_profile.json"))
+        for library in profile.get("libraries", []):
+            artifact = library.get("downloads", {}).get("artifact", {})
+            path, sha1, url = artifact.get("path"), artifact.get("sha1"), artifact.get("url")
+            embedded = f"maven/{path}"
+            if not (path and sha1 and url) or embedded not in z.namelist():
+                continue
+            if hashlib.sha1(z.read(embedded)).hexdigest() == sha1:
+                continue
+            with urllib.request.urlopen(url, timeout=300) as response:
+                data = response.read()
+            if hashlib.sha1(data).hexdigest() != sha1:
+                continue  # neither copy matches; let the installer report it
+            log(f"    {library['name']}: embedded copy fails its checksum; seeding the Maven copy")
+            dest = workdir / "libraries" / path
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(data)
+
+
 def install(loader, mc, loader_version, workdir, cache, java):
     url, full = installer_url(loader, mc, loader_version)
     installer = cache / Path(url).name
@@ -88,21 +141,52 @@ def install(loader, mc, loader_version, workdir, cache, java):
         with urllib.request.urlopen(request, timeout=300) as response, open(installer, "wb") as out:
             shutil.copyfileobj(response, out)
 
-    marker = args_file(loader, workdir, full)
-    if marker.exists():
+    if launch_args(loader, workdir, full):
         return full
 
     seed_server_jar(installer, mc, workdir, cache)
+    seed_bad_embedded_libraries(installer, workdir)
     log(f"    installing {loader} server (this pulls libraries; allow a few minutes)")
     # Installing several Minecraft servers at the same time corrupts the downloads - the piston-data
     # server jar comes back with an invalid checksum. Run these one at a time.
-    result = subprocess.run(
-        [java, "-jar", str(installer), "--installServer", "."],
-        cwd=workdir, capture_output=True, text=True, timeout=1800,
-    )
-    if not marker.exists():
-        raise RuntimeError(f"install failed; no {marker.name}\n{result.stdout[-1500:]}")
+    command = [java, "-jar", str(installer), "--installServer", "."]
+    result = subprocess.run(command, cwd=workdir, capture_output=True, text=True, timeout=1800)
+    if not launch_args(loader, workdir, full) and f"UnknownHostException: {RETIRED_HOST}" in result.stdout:
+        log(f"    installer crashed looking up {RETIRED_HOST}; retrying with a hosts file")
+        hosts = write_hosts_file(installer, workdir)
+        result = subprocess.run([java, f"-Djdk.net.hosts.file={hosts}"] + command[1:],
+                                cwd=workdir, capture_output=True, text=True, timeout=1800)
+    if not launch_args(loader, workdir, full):
+        raise RuntimeError(f"install failed; no unix_args.txt or shim jar\n{result.stdout[-1500:]}")
     return full
+
+
+# Mojang retired its old auth server, and installers from before that (NeoForge 20.4.0-beta, for one)
+# resolve it on startup just to print a diagnostic, then crash on the null result. Every download host
+# still works, so the fix is to resolve those ourselves and give the retired one a dummy address.
+RETIRED_HOST = "authserver.mojang.com"
+INSTALLER_HOSTS = {"launchermeta.mojang.com", "piston-meta.mojang.com", "piston-data.mojang.com",
+                   "libraries.minecraft.net", "sessionserver.mojang.com", "files.minecraftforge.net",
+                   "maven.minecraftforge.net", "maven.neoforged.net"}
+
+
+def write_hosts_file(installer, workdir):
+    """A hosts file for `-Djdk.net.hosts.file`, which makes the JVM resolve names from it alone - so it
+    lists every host the installer downloads from, read out of its own profile, resolved just now."""
+    hosts = set(INSTALLER_HOSTS)
+    with zipfile.ZipFile(installer) as z:
+        for member in ("install_profile.json", "version.json"):
+            if member in z.namelist():
+                hosts.update(re.findall(r"https?://([^/\"]+)", z.read(member).decode("utf-8")))
+    lines = [f"127.0.0.1 {RETIRED_HOST}"]
+    for host in sorted(hosts - {RETIRED_HOST}):
+        try:
+            lines.append(f"{socket.gethostbyname(host)} {host}")
+        except OSError:
+            pass
+    path = workdir / "installer-hosts"
+    path.write_text("\n".join(lines) + "\n")
+    return path
 
 
 def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, password,
@@ -129,7 +213,7 @@ def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, p
     log_path = workdir / "server.log"
     with open(log_path, "w") as log_file:
         process = subprocess.Popen(
-            [java, "-Xmx2G", f"@{args_file(loader, workdir, full).relative_to(workdir)}", "--nogui"],
+            [java, "-Xmx2G", *launch_args(loader, workdir, full), "--nogui"],
             cwd=workdir, stdout=log_file, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
         )
 

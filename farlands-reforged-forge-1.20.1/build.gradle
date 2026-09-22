@@ -1,0 +1,103 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
+    // Forge 1.20 - 1.20.4 runs on SRG names: its installer renames Minecraft with MERGED_MAPPINGS
+    // (obfuscated -> SRG), where 1.20.6 and later rename to Mojang's names. So the mixins are remapped,
+    // and this plugin writes the refmap that lets them find their SRG targets at runtime.
+    id 'org.spongepowered.mixin' version '0.7.+'
+}
+
+version = mod_version
+group = mod_group_id
+base.archivesName = mod_id
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version as int)
+
+minecraft {
+    // The sources use Mojang's names like every other project; reobfJar and the refmap turn them into
+    // SRG on the way out.
+    mappings channel: 'official', version: minecraft_version
+
+    // ForgeGradle 6 run configurations, which spell these differently from the FG7 ones in
+    // farlands-reforged-forge-26.2.
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+        }
+        server {
+            workingDirectory project.file('run')
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            args '--nogui'
+        }
+    }
+}
+
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
+}
+
+repositories {
+    // Mojang's library repo has to come first. Minecraft 1.21 needs LWJGL's natives-macos-patch
+    // artifacts, which exist only here - but the plain lwjgl POMs are on Maven Central too, and Gradle
+    // fetches every artifact of a module from whichever repository supplied its metadata. Let Central
+    // win the metadata and the patch jars become unresolvable.
+    maven { name = 'Mojang'; url = 'https://libraries.minecraft.net/' }
+    maven { name = 'MinecraftForge'; url = 'https://maven.minecraftforge.net/' }
+    maven { name = 'Sponge'; url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+// The mod's own calls into Minecraft have to be rewritten to SRG too. ForgeGradle 6 does not register
+// this task on its own; naming the jar here creates reobfJar, and the jar task is finalized by it.
+reobf {
+    jar {}
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = java_version as int
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    var replaceProperties = [
+        minecraft_version      : minecraft_version,
+        minecraft_version_range: minecraft_version_range,
+        forge_version          : forge_version,
+        forge_loader_major     : forge_loader_major,
+        forge_version_min      : forge_version_min,
+        mod_id                 : mod_id,
+        mod_name               : mod_name,
+        mod_license            : mod_license,
+        mod_version            : mod_version,
+        mod_authors            : mod_authors,
+        mod_description        : mod_description
+    ]
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) { expand replaceProperties }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+            'Specification-Title'     : mod_id,
+            'Specification-Vendor'    : mod_authors,
+            'Specification-Version'   : '1',
+            'Implementation-Title'    : project.name,
+            'Implementation-Version'  : project.jar.archiveVersion,
+            'Implementation-Vendor'   : mod_authors,
+            'MixinConfigs'            : "${mod_id}.mixins.json"
+        ])
+    }
+    finalizedBy 'reobfJar'
+}

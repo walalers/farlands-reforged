@@ -23,6 +23,7 @@ import struct
 import sys
 
 LOGIN, COMMAND = 3, 2
+MAX_CHUNK = 4096  # RconClient.sendCmdResponse splits replies into packets of this many bytes
 AUTH_FAILED = -1
 
 
@@ -35,6 +36,7 @@ class Rcon:
         self.host, self.port, self.password, self.timeout = host, port, password, timeout
         self.sock = None
         self._next_id = 0
+        self._last_body_bytes = 0
 
     def __enter__(self):
         self.connect()
@@ -63,8 +65,13 @@ class Rcon:
             response_id, body = self._recv()
             if response_id == request_id:
                 chunks.append(body)
-            # Long replies (`datapack list` on a big server) arrive as several packets; the socket
-            # going quiet is the only end-of-reply signal the protocol offers.
+                # The server splits a reply into packets of at most MAX_CHUNK bytes, so a shorter one
+                # is the last. Stopping there, rather than always waiting for the socket to go quiet,
+                # takes a flat 0.3s off every command - most of the time of a terrain probe.
+                if self._last_body_bytes < MAX_CHUNK:
+                    break
+            # A full-size packet may or may not be followed by more; silence is the only other
+            # end-of-reply signal the protocol offers.
             if not select.select([self.sock], [], [], 0.3)[0]:
                 break
         return "".join(chunks)
@@ -88,6 +95,9 @@ class Rcon:
         (length,) = struct.unpack("<i", self._recv_exactly(4))
         payload = self._recv_exactly(length)
         response_id, _kind = struct.unpack("<ii", payload[:8])
+        # Raw size, not the decoded text's: a character split across two packets decodes with
+        # replacement characters and would throw the length check in command() off.
+        self._last_body_bytes = len(payload) - 10
         return response_id, payload[8:-2].decode("utf-8", "replace")
 
 

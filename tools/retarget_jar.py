@@ -28,7 +28,8 @@ import zipfile
 from pathlib import Path
 
 FABRIC_META = "fabric.mod.json"
-NEOFORGE_META = "META-INF/neoforge.mods.toml"
+# NeoForge renamed its metadata file in 20.5; older builds read META-INF/mods.toml like Forge.
+NEOFORGE_METAS = ("META-INF/neoforge.mods.toml", "META-INF/mods.toml")
 
 
 def rewrite_fabric(text, mod_version, minecraft):
@@ -65,7 +66,7 @@ def rewrite_neoforge(text, mod_version, minecraft, loader):
 
     missing = [k for k, v in seen.items() if not v]
     if missing:
-        sys.exit(f"error: never found {', '.join(missing)} in {NEOFORGE_META}")
+        sys.exit(f"error: never found {', '.join(missing)} in the NeoForge mods.toml")
     return "".join(out)
 
 
@@ -85,11 +86,11 @@ def main():
         sys.exit("error: --neoforge needs --loader")
 
     src, out = Path(args.src), Path(args.out)
-    member = FABRIC_META if args.fabric else NEOFORGE_META
-
     with zipfile.ZipFile(src) as zf:
-        if member not in zf.namelist():
-            sys.exit(f"error: {src.name} has no {member}")
+        wanted = (FABRIC_META,) if args.fabric else NEOFORGE_METAS
+        member = next((m for m in wanted if m in zf.namelist()), None)
+        if member is None:
+            sys.exit(f"error: {src.name} has no {' or '.join(wanted)}")
         original = zf.read(member).decode("utf-8")
 
     if args.fabric:

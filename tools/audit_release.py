@@ -69,10 +69,16 @@ def loader_of(name):
     return None
 
 
+def neoforge_toml(zf):
+    """NeoForge reads META-INF/neoforge.mods.toml from 20.5 on, and META-INF/mods.toml before."""
+    names = zf.namelist()
+    return next((m for m in ("META-INF/neoforge.mods.toml", "META-INF/mods.toml") if m in names), None)
+
+
 def declared_version(zf, loader):
     if loader == "fabric":
         return json.loads(zf.read("fabric.mod.json"))["version"]
-    meta = "META-INF/neoforge.mods.toml" if loader == "neoforge" else "META-INF/mods.toml"
+    meta = neoforge_toml(zf) if loader == "neoforge" else "META-INF/mods.toml"
     text = zf.read(meta).decode("utf-8")
     match = re.search(r'^\s*version\s*=\s*"([^"]+)"', text, re.M)
     return match.group(1) if match else None
@@ -109,14 +115,22 @@ def audit(path, version):
         if got != want:
             problems.append(f"declares version {got!r}, filename says {want!r}")
 
-        # 1b. NeoForge 20.x (Minecraft 1.20.x) ships FancyModLoader 3; 21.x and later ship 4+. A jar
-        #     asking for [4,) on 1.20.x is refused before any of it runs.
+        # 1b. The FancyModLoader major, and the metadata file name, follow the NeoForge line: 20.2-20.4
+        #     ship FML 1-2 and read mods.toml, 20.5-20.6 ship FML 3, 21.x and later FML 4+ - and the
+        #     latter two read neoforge.mods.toml. A loaderVersion above what the line ships is refused
+        #     before any of the mod runs; a file under the wrong name is not read at all.
         if loader == "neoforge" and mc_tuple(expected_mc) < (1, 21):
-            toml = zf.read("META-INF/neoforge.mods.toml").decode("utf-8")
-            match = re.search(r'^\s*loaderVersion\s*=\s*"([^"]+)"', toml, re.M)
-            if not match or match.group(1) != "[3,)":
-                problems.append(f"loaderVersion {match and match.group(1)!r}; NeoForge for 1.20.x "
-                                "ships FML 3, so it must be [3,)")
+            old_line = mc_tuple(expected_mc) < (1, 20, 5)
+            want_file = "META-INF/mods.toml" if old_line else "META-INF/neoforge.mods.toml"
+            want_fml = "[1,)" if old_line else "[3,)"
+            if want_file not in names:
+                problems.append(f"no {want_file}, which is what NeoForge for {expected_mc} reads")
+            else:
+                toml = zf.read(want_file).decode("utf-8")
+                match = re.search(r'^\s*loaderVersion\s*=\s*"([^"]+)"', toml, re.M)
+                if not match or match.group(1) != want_fml:
+                    problems.append(f"loaderVersion {match and match.group(1)!r}; NeoForge for "
+                                    f"{expected_mc} needs {want_fml}")
 
         # 2. Mixin config must list the right mixins, and each must be present as a class.
         config = [n for n in names if n.endswith("farlandsreforged.mixins.json")]
@@ -153,6 +167,22 @@ def audit(path, version):
                         capture_output=True, text=True).stdout
                     if re.search(r"\bstatic\b[^\n]*farlandsreforged\$", listing):
                         problems.append(f"{mixin} has a static handler, which Mixin 0.8.5 rejects")
+            # Forge before 1.20.6 runs on SRG, so the refmap is what points each injection at its SRG
+            # target; from 1.20.6 it runs on Mojang's names and a refmap means the jar was wrongly
+            # reobfuscated. A build-cache hit once dropped the refmap without any error.
+            if loader == "forge":
+                refmap_name = json.loads(zf.read(config[0])).get("refmap")
+                if mc_tuple(expected_mc) < (1, 20, 6):
+                    if not refmap_name or refmap_name not in names:
+                        problems.append(f"no refmap ({refmap_name!r}); Forge {expected_mc} runs on SRG")
+                    else:
+                        mappings = json.loads(zf.read(refmap_name)).get("mappings", {})
+                        for mixin in listed:
+                            entries = mappings.get(f"{CLASS_ROOT}/mixin/{mixin}", {})
+                            if mixin != "CommandsMixin" and not re.search(r"\b[mf]_\d+_\b", str(entries)):
+                                problems.append(f"{mixin} has no SRG refmap entries")
+                elif refmap_name or any(n.endswith("refmap.json") for n in names):
+                    problems.append(f"refmap present, but Forge {expected_mc} runs on Mojang's names")
             # The pack fix is Fabric-only; on Forge and NeoForge the loader does this itself.
             if loader != "fabric" and "PackRepositoryMixin" in listed:
                 problems.append("PackRepositoryMixin present on a non-Fabric jar")
@@ -168,6 +198,20 @@ def audit(path, version):
         # 4. The advertised content has to actually be in there.
         if advancement_path(expected_mc) not in names:
             problems.append(f"no {advancement_path(expected_mc)}")
+        else:
+            # Item stacks in JSON became {"id": ...} in 1.20.5; before that they are {"item": ...}. The
+            # wrong key fails to parse and the advancement is dropped with one line in the server log.
+            icon = json.loads(zf.read(advancement_path(expected_mc)))["display"]["icon"]
+            key = "item" if mc_tuple(expected_mc) < (1, 20, 5) else "id"
+            if key not in icon:
+                problems.append(f"advancement icon {icon}; Minecraft {expected_mc} needs {key!r}")
+
+        # 4b. Minecraft before 1.20.5 runs on Java 17, so no class may be newer than Java 17 (major 61).
+        if mc_tuple(expected_mc) < (1, 20, 5):
+            newer = sorted(n for n in names if n.endswith(".class")
+                           and int.from_bytes(zf.read(n)[6:8], "big") > 61)
+            if newer:
+                problems.append(f"{len(newer)} classes newer than Java 17, e.g. {newer[0]}")
         if LANG not in names:
             problems.append("no en_us.json lang file")
 
@@ -178,11 +222,18 @@ def audit(path, version):
                 problems.append("Forge jar has no pack.mcmeta - its data pack is silently dropped")
             else:
                 meta = json.loads(zf.read("pack.mcmeta"))["pack"]
+                # supported_formats exists from 1.20.2 (pack format 18) until 1.21.11 replaced it.
                 old_family = mc_tuple(expected_mc) < (1, 21, 11)
-                if old_family and "supported_formats" not in meta:
-                    problems.append("pack.mcmeta lacks supported_formats, which pre-1.21.11 needs")
+                if (1, 20, 2) <= mc_tuple(expected_mc) and old_family and "supported_formats" not in meta:
+                    problems.append("pack.mcmeta lacks supported_formats, which 1.20.2-1.21.10 needs")
                 if not old_family and not ({"min_format", "max_format"} & set(meta)):
                     problems.append("pack.mcmeta lacks min_format/max_format")
+        elif loader == "neoforge" and mc_tuple(expected_mc) < (1, 20, 5):
+            # NeoForge 20.2 and 20.3 (and early 20.4) make a mod's resources into a pack only if the
+            # jar has pack.mcmeta; without it they log "Missing metadata in pack" and drop it, and the
+            # server otherwise runs perfectly. Later builds merge every mod into one mod_data pack.
+            if "pack.mcmeta" not in names:
+                problems.append("NeoForge jar has no pack.mcmeta - 20.2/20.3 silently drop its data pack")
         elif "pack.mcmeta" in names:
             # Deliberate: pack_format numbers change nearly every release and a stale one silently
             # drops the pack, so Fabric builds the metadata in code instead.
