@@ -60,14 +60,14 @@ FORGE = [("1.18.2", "40.0.0"), ("1.19", "41.0.1"), ("1.19.1", "42.0.0"), ("1.19.
          ("1.21.3", "53.1.12"), ("1.21.4", "54.1.18"), ("1.21.5", "55.1.13"), ("1.21.6", "56.0.0"),
          ("1.21.7", "57.0.0"), ("1.21.8", "58.1.22"), ("1.21.9", "59.0.5"), ("1.21.10", "60.1.15"),
          ("1.21.11", None), ("26.1", "62.0.9"), ("26.1.1", "63.0.2"), ("26.1.2", "64.1.3"),
-         ("26.2", "65.0.0")]
+         ("26.2", "65.0.0"), ("26.3", "66.0.3")]
 NEOFORGE = [("1.20.2", "20.2.86"), ("1.20.3", "20.3.1-beta"), ("1.20.4", "20.4.0-beta"),
             ("1.20.5", "20.5.14-beta"), ("1.20.6", "20.6.141"), ("1.21", "21.0.167"), ("1.21.1", "21.1.251"),
             ("1.21.2", "21.2.1-beta"), ("1.21.3", "21.3.97"), ("1.21.4", "21.4.157"), ("1.21.5", "21.5.98"),
             ("1.21.6", "21.6.20-beta"), ("1.21.7", "21.7.25-beta"), ("1.21.8", "21.8.54"),
             ("1.21.9", "21.9.16-beta"), ("1.21.10", "21.10.64"), ("1.21.11", None),
             ("26.1", "26.1.0.19-beta"), ("26.1.1", "26.1.1.15-beta"), ("26.1.2", "26.1.2.109"),
-            ("26.2", "26.2.0.88")]
+            ("26.2", "26.2.0.88"), ("26.3", "26.3.0.10-beta")]
 
 PORTS = {"fabric": 25611, "forge": 25621, "neoforge": 25631}  # RCON is each plus 100
 NETWORK_RETRIES = 3
@@ -88,6 +88,11 @@ def gradle_prop(project, key):
 
 
 def passed(result):
+    if result["mode"] == "corrupt" and result["parse_error"] and not result["booted"] \
+            and tuple(int(p) for p in result["mc"].split(".")) >= (26, 3):
+        # Minecraft 26.3 loads advancements as a registry, and vanilla refuses to start on any registry error
+        # ("Failed to load datapacks, can't proceed"). The parse error naming the mod's advancement is the proof.
+        return True
     ok = result["booted"] and result.get("command_ok") and not result["errors"]
     return bool(ok and (result["parse_error"] if result["mode"] == "corrupt" else result["pack_listed"]))
 

@@ -39,7 +39,7 @@ versions, 0.4.0 and 0.5.0 behave identically, and terrain generation is the same
 
 | Minecraft        | Fabric | NeoForge | Forge | Java |
 |------------------|:------:|:--------:|:-----:|:----:|
-| 26.3             | ✅     | —        | —     | 25   |
+| 26.3             | ✅     | ✅⁶      | ✅⁶   | 25   |
 | 26.2             | ✅     | ✅       | ✅    | 25   |
 | 26.1.2           | ✅     | ✅       | ✅    | 25   |
 | 26.1.1           | ✅     | ✅       | ✅    | 25   |
@@ -71,6 +71,8 @@ separate NeoForge jar for it. Tested on NeoForge 47.1.60 and 47.1.106; the first
 
 ⁵ NeoForge does not exist before Minecraft 1.20.1. Minecraft 1.18 and 1.18.1 are not supported: their
 world generator predates the density functions the Far Lands mechanisms hook into.
+
+⁶ NeoForge 26.3 has not left beta, so that jar is built against **26.3.0.10-beta** and runs on the 26.3 betas from 26.3.0.0-beta on. Forge 26.3 needs **Forge 66** or newer.
 
 The 26.x builds need **Java 25**, the 1.21, 1.20.5 and 1.20.6 builds **Java 21**, and 1.18.2 to 1.20.4
 **Java 17**, whatever that Minecraft version ships with. Fabric builds need only Fabric Loader.

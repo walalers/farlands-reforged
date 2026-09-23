@@ -26,7 +26,7 @@ No new blocks, no resource pack, no fuss — just the classic terrain ghost, fai
 
 | Minecraft        | Fabric | NeoForge | Forge | Java |
 |------------------|:------:|:--------:|:-----:|:----:|
-| 26.3             | ✅     | —        | —     | 25   |
+| 26.3             | ✅     | ✅⁶      | ✅⁶   | 25   |
 | 26.2             | ✅     | ✅       | ✅    | 25   |
 | 26.1.2           | ✅     | ✅       | ✅    | 25   |
 | 26.1.1           | ✅     | ✅       | ✅    | 25   |
@@ -58,6 +58,8 @@ separate NeoForge jar for it. Tested on NeoForge 47.1.60 and 47.1.106; the first
 
 ⁵ NeoForge does not exist before Minecraft 1.20.1. Minecraft 1.18 and 1.18.1 are not supported: their
 world generator predates the density functions the Far Lands mechanisms hook into.
+
+⁶ NeoForge 26.3 has not left beta, so that jar is built against **26.3.0.10-beta** and runs on the 26.3 betas from 26.3.0.0-beta on. Forge 26.3 needs **Forge 66** or newer.
 
 The 26.x builds need **Java 25**, the 1.21, 1.20.5 and 1.20.6 builds **Java 21**, and 1.18.2 – 1.20.4
 **Java 17** — whatever that Minecraft version ships with. Fabric builds need only Fabric Loader —
@@ -145,14 +147,15 @@ farlands-reforged-fabric-1.20.1/      Fabric source for Minecraft 1.20 and 1.20.
 farlands-reforged-fabric-1.19.4/      Fabric source for Minecraft 1.19.3 and 1.19.4 (Java 17)
 farlands-reforged-fabric-1.19.2/      Fabric source for Minecraft 1.19 ... 1.19.2 (Java 17, File-based packs)
 farlands-reforged-fabric-1.18.2/      Fabric source for Minecraft 1.18.2 (Java 17)
-farlands-reforged-neoforge-26.3/      NeoForge source for Minecraft 26.3 (NeoForge beta, unreleased)
+farlands-reforged-neoforge-26.3/      NeoForge source for Minecraft 26.3 (built against NeoForge's 26.3 beta)
 farlands-reforged-26.2/               NeoForge source for Minecraft 26.2
 farlands-reforged-neoforge-26.1.2/    NeoForge source for Minecraft 26.1.2
 farlands-reforged-neoforge-1.21.11/   NeoForge source for Minecraft 1.21.11
 farlands-reforged-neoforge-1.21/      NeoForge source for Minecraft 1.21 ... 1.21.10
 farlands-reforged-neoforge-1.20.6/    NeoForge source for Minecraft 1.20.6 (1.20.5 is retargeted)
 farlands-reforged-neoforge-1.20.4/    NeoForge source for Minecraft 1.20.4 (1.20.2, 1.20.3 retargeted)
-farlands-reforged-forge-26.2/         Forge source for Minecraft 26.x (built per version, see its README)
+farlands-reforged-forge-26.3/         Forge source for Minecraft 26.3 (the 26.3 worldgen mixins)
+farlands-reforged-forge-26.2/         Forge source for Minecraft 26.1 ... 26.2 (built per version, see its README)
 farlands-reforged-forge-1.21.11/      Forge source for Minecraft 1.21.11 (ForgeGradle 7)
 farlands-reforged-forge-1.21/         Forge source for Minecraft 1.21 ... 1.21.10 (ForgeGradle 6, official names)
 farlands-reforged-forge-1.20.6/       Forge source for Minecraft 1.20.6 (ForgeGradle 6, Mixin 0.8.5)
@@ -187,9 +190,9 @@ aimed at the same six behaviours. The legacy terrain noise can no longer simply 
 overflowed values do not fit in a float; instead `FarlandsClassicNoise` re-evaluates that noise in double
 precision from vanilla's own octaves wherever the wrap would change anything (beyond ±98,000 blocks), which
 reproduces the 26.2 result. `farlands-reforged-neoforge-26.3` combines those 26.3 mixins with the NeoForge
-config, commands and events from `farlands-reforged-26.2`. It targets the NeoForge `26.3.0.0-beta` and is not
-released yet; with the same seed its Far Lands terrain matches the Fabric 26.3 build. Forge has no 26.3 release
-yet.
+config, commands and events from `farlands-reforged-26.2`, and `farlands-reforged-forge-26.3` combines them with
+the Forge glue from `farlands-reforged-forge-26.2`. With the same seed, the Far Lands terrain of all three 26.3
+builds matches block for block.
 
 ## Building
 
@@ -211,7 +214,8 @@ the dependency version ranges, and `mod_version`), then rebuild.
 - **0.5.0** — Minecraft **1.18.2 … 1.20.6**: 1.20.x on Fabric, Forge and NeoForge, 1.19.x and 1.18.2 on
   Fabric and Forge. The Far Lands are the same code, and the terrain matches the 1.21 and 26.x builds block for
   block. Minecraft 1.18 and 1.18.1 are not supported: their world generator predates the one this mod hooks.
-  The 1.21 and 26.x builds are unchanged apart from the version number.
+  The 1.21 and 26.x builds are unchanged apart from the version number. Forge and NeoForge 26.3 were added
+  later under the same version, with the same terrain as Fabric 26.3.
 - **0.4.0** — Minecraft **1.21 … 1.21.11** on all three loaders, and the **"...where am I?" advancement now
   actually works on Fabric**. It never had: Fabric Loader does not turn a mod's `data/` directory into a data
   pack — that is Fabric API's job, and this mod deliberately does not depend on Fabric API — so the advancement

@@ -204,6 +204,8 @@ run "neoforge:26.1.2" farlands-reforged-neoforge-26.1.2 \
   bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc26.1.2-neoforge"
 run "neoforge:26.2" farlands-reforged-26.2 \
   bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc26.2-neoforge"
+run "neoforge:26.3" farlands-reforged-neoforge-26.3 \
+  bash -c "'$GRADLE_BIN' --no-daemon --console=plain clean build -x test -Pmod_version=$VERSION+mc26.3-neoforge"
 
 echo "=== Forge 26.x ==="
 # Forge numbers its major per Minecraft version, and mods.toml is built from the major alone, so each
@@ -220,6 +222,9 @@ for v in 26.1 26.1.1 26.1.2 26.2; do
       -Pminecraft_version="$v" "-Pminecraft_version_range=$fr" \
       -Pforge_version="$fv" -Pforge_loader_major="$fm" -Pmod_version="$VERSION+mc$v-forge"
 done
+# 26.3 rewrote world generation, so Forge 26.3 has its own project (the 26.3 mixins, as on Fabric and NeoForge).
+run "forge:26.3" farlands-reforged-forge-26.3 \
+  ./gradlew --no-daemon --console=plain clean build -x test -Pmod_version="$VERSION+mc26.3-forge"
 
 echo
 echo "=== Retarget 26.1 / 26.1.1 from the 26.1.2 builds, and NeoForge 1.20.5 from 1.20.6 ==="

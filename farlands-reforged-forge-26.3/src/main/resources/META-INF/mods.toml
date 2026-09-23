@@ -1,0 +1,26 @@
+modLoader="javafml"
+loaderVersion="[${forge_loader_major},)"
+license="${mod_license}"
+issueTrackerURL="https://github.com/walalers/farlands-reforged/issues"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+displayURL="https://github.com/walalers/farlands-reforged"
+authors="${mod_authors}"
+description='''${mod_description}'''
+
+[[dependencies.farlandsreforged]]
+    modId="forge"
+    mandatory=true
+    versionRange="[${forge_loader_major},)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.farlandsreforged]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"

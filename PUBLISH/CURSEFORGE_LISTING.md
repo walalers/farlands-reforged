@@ -72,7 +72,7 @@ Removing the wrap sounds like it should be enough, but it isn't. On its own, mod
 
 | Minecraft | Fabric | NeoForge | Forge |
 |-----------|:------:|:--------:|:-----:|
-| 26.3      | ✅ | | |
+| 26.3      | ✅ | ✅*** | ✅ |
 | 26.2      | ✅ | ✅ | ✅ |
 | 26.1.2    | ✅ | ✅ | ✅ |
 | 26.1.1    | ✅ | ✅ | ✅ |
@@ -87,13 +87,14 @@ Removing the wrap sounds like it should be enough, but it isn't. On its own, mod
 | 1.19 … 1.19.4 | ✅ | | ✅ |
 | 1.18.2    | ✅ | | ✅ |
 
-\* Forge never shipped a 1.21.2 build, so there is no 1.21.2 Forge jar. NeoForge has no stable 26.3 yet,
-so there is no NeoForge 26.3 jar either. On Minecraft **1.21**, the Forge jar needs **Forge 51.0.23 or
+\* Forge never shipped a 1.21.2 build, so there is no 1.21.2 Forge jar. On Minecraft **1.21**, the Forge jar needs **Forge 51.0.23 or
 newer** — older 51.x builds ship a Mixin too old to read this mod's config and stop the server at
 startup. The jar says so, so Forge tells you instead of crashing. Forge never shipped a 1.20.5 build
 either, and NeoForge does not exist before 1.20.1.
 
 \*\* NeoForge for 1.20.1 runs the **Forge 1.20.1 jar**. There is no separate NeoForge jar for it.
+
+\*\*\* NeoForge 26.3 is still in beta, so that jar is built against its betas (26.3.0.0-beta or newer).
 
 Minecraft 1.18 and 1.18.1 aren't supported: their world generator predates the code this mod hooks.
 
@@ -146,7 +147,8 @@ tags: its Minecraft version, its modloader, and its Java version — **Java 17**
 
 The release is 78 files: the 48 of 0.4.0 (Minecraft 1.21 … 1.21.11 and 26.x) plus 30 new ones — 1.20 … 1.20.6
 on Fabric (7), Forge (6 — no 1.20.5) and NeoForge (5 — none for 1.20, and 1.20.1 uses the Forge jar), and 1.18.2
-and 1.19 … 1.19.4 on Fabric and Forge (12). There is no NeoForge 26.3 jar: NeoForge has no stable 26.3 yet.
+and 1.19 … 1.19.4 on Fabric and Forge (12). Forge 26.3 and NeoForge 26.3 (2) were added later under the same version, so 0.5.0 is 80 files; the NeoForge
+one is built against NeoForge's 26.3 betas.
 
 ---
 

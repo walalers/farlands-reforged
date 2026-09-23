@@ -1,0 +1,27 @@
+{
+  "criteria": {
+    "reached_farlands": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "background": "minecraft:textures/block/dirt.png",
+    "description": {
+      "translate": "advancements.farlandsreforged.where_am_i.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "id": "minecraft:compass"
+    },
+    "title": {
+      "translate": "advancements.farlandsreforged.where_am_i.title"
+    }
+  },
+  "requirements": [
+    [
+      "reached_farlands"
+    ]
+  ],
+  "sends_telemetry_event": false
+}
