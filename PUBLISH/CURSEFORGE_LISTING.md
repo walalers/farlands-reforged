@@ -105,8 +105,8 @@ against 1.21.8 will not behave correctly on 1.21.5.
 
 ## Config
 
-Fabric and Forge: `config/farlandsreforged.properties`
-NeoForge: `config/farlandsreforged-common.toml`
+- Fabric and Forge: `config/farlandsreforged.properties`
+- NeoForge: `config/farlandsreforged-common.toml`
 
 ```toml
 enableFarlandsTerrain = true
