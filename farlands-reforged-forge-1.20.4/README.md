@@ -33,7 +33,7 @@ Every Forge 1.20.x build bundles **Mixin 0.8.5**, so the mixin config says `JAVA
 
 ```bash
 JAVA_HOME=/path/to/jdk-21 ./gradlew build -Pminecraft_version=1.20.2 -Pminecraft_version_range='[1.20.2]' \
-  -Pforge_version=48.1.0 -Pforge_loader_major=48 -Pforge_version_min=48 -Pmod_version=0.4.0+mc1.20.2-forge
+  -Pforge_version=48.1.0 -Pforge_loader_major=48 -Pforge_version_min=48 -Pmod_version=0.5.0+mc1.20.2-forge
 python scripts/verify_artifact.py
 ```
 

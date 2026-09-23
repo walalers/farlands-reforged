@@ -14,7 +14,7 @@ mechanisms:
   carries its own version's format (10 on 1.19.3, 12 on 1.19.4), and every version gets its own build.
 
 ```bash
-gradle build -Pminecraft_version=1.19.3 -Pminecraft_version_range=1.19.3 -Pmod_version=0.4.0+mc1.19.3-fabric
+gradle build -Pminecraft_version=1.19.3 -Pminecraft_version_range=1.19.3 -Pmod_version=0.5.0+mc1.19.3-fabric
 python scripts/verify_artifact.py
 ```
 

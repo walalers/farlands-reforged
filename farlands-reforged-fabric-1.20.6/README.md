@@ -20,7 +20,7 @@ fix touches (`tools/verify_pack_api.py`). It builds on **Java 21**, which 1.20.5
 
 ```bash
 ./gradlew build -Pminecraft_version=1.20.5 -Pminecraft_version_range=1.20.5 \
-  -Pmod_version=0.4.0+mc1.20.5-fabric
+  -Pmod_version=0.5.0+mc1.20.5-fabric
 python scripts/verify_artifact.py
 ```
 

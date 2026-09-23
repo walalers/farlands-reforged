@@ -208,6 +208,10 @@ the dependency version ranges, and `mod_version`), then rebuild.
 
 ## Changelog
 
+- **0.5.0** — Minecraft **1.18.2 … 1.20.6**: 1.20.x on Fabric, Forge and NeoForge, 1.19.x and 1.18.2 on
+  Fabric and Forge. The Far Lands are the same code, and the terrain matches the 1.21 and 26.x builds block for
+  block. Minecraft 1.18 and 1.18.1 are not supported: their world generator predates the one this mod hooks.
+  The 1.21 and 26.x builds are unchanged apart from the version number.
 - **0.4.0** — Minecraft **1.21 … 1.21.11** on all three loaders, and the **"...where am I?" advancement now
   actually works on Fabric**. It never had: Fabric Loader does not turn a mod's `data/` directory into a data
   pack — that is Fabric API's job, and this mod deliberately does not depend on Fabric API — so the advancement

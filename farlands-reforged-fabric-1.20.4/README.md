@@ -16,7 +16,7 @@ from 1.20 to 1.20.6. The differences:
 
 ```bash
 ./gradlew build -Pminecraft_version=1.20.2 -Pminecraft_version_range=1.20.2 \
-  -Pmod_version=0.4.0+mc1.20.2-fabric
+  -Pmod_version=0.5.0+mc1.20.2-fabric
 python scripts/verify_artifact.py
 ```
 

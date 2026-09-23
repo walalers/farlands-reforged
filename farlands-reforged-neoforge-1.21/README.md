@@ -21,7 +21,7 @@ project with the versions passed on the command line:
 ```bash
 ./gradlew build -Pminecraft_version=1.21.4 -Pminecraft_version_range='[1.21.4]' \
   -Pneoforge_version=21.4.157 -Pneoforge_version_range='[21.4.0,21.5)' \
-  -Pmod_version=0.4.0+mc1.21.4-neoforge
+  -Pmod_version=0.5.0+mc1.21.4-neoforge
 python scripts/verify_artifact.py
 ```
 

@@ -10,7 +10,7 @@ Forge build for **Minecraft 1.20 (Forge 46) and 1.20.1 (Forge 47)**. It is `farl
 
 ```bash
 JAVA_HOME=/path/to/jdk-21 ./gradlew build -Pminecraft_version=1.20 -Pminecraft_version_range='[1.20]' \
-  -Pforge_version=46.0.14 -Pforge_loader_major=46 -Pforge_version_min=46 -Pmod_version=0.4.0+mc1.20-forge
+  -Pforge_version=46.0.14 -Pforge_loader_major=46 -Pforge_version_min=46 -Pmod_version=0.5.0+mc1.20-forge
 python scripts/verify_artifact.py
 ```
 

@@ -12,7 +12,7 @@ Fabric build for **Minecraft 1.20 and 1.20.1**. It is `farlands-reforged-fabric-
   stale.
 
 ```bash
-./gradlew build -Pminecraft_version=1.20 -Pminecraft_version_range=1.20 -Pmod_version=0.4.0+mc1.20-fabric
+./gradlew build -Pminecraft_version=1.20 -Pminecraft_version_range=1.20 -Pmod_version=0.5.0+mc1.20-fabric
 python scripts/verify_artifact.py
 ```
 

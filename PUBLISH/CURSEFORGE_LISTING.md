@@ -1,6 +1,6 @@
 # Farlands Reforged — CurseForge publish pack
 
-Everything here is paste-ready. The `jars/` folder holds the 48 files you upload.
+Everything here is paste-ready. The `jars/` folder holds the 78 files you upload.
 `logo.png` is your 400×400 project logo. Work top-to-bottom and you're live.
 
 ---
@@ -79,22 +79,34 @@ Removing the wrap sounds like it should be enough, but it isn't. On its own, mod
 | 26.1      | ✅ | ✅ | ✅ |
 | 1.21.11   | ✅ | ✅ | ✅ |
 | 1.21 … 1.21.10 | ✅ | ✅ | ✅* |
+| 1.20.6    | ✅ | ✅ | ✅ |
+| 1.20.5    | ✅ | ✅ | |
+| 1.20.2 … 1.20.4 | ✅ | ✅ | ✅ |
+| 1.20.1    | ✅ | ✅** | ✅ |
+| 1.20      | ✅ | | ✅ |
+| 1.19 … 1.19.4 | ✅ | | ✅ |
+| 1.18.2    | ✅ | | ✅ |
 
 \* Forge never shipped a 1.21.2 build, so there is no 1.21.2 Forge jar. NeoForge has no stable 26.3 yet,
 so there is no NeoForge 26.3 jar either. On Minecraft **1.21**, the Forge jar needs **Forge 51.0.23 or
 newer** — older 51.x builds ship a Mixin too old to read this mod's config and stop the server at
-startup. The jar says so, so Forge tells you instead of crashing.
+startup. The jar says so, so Forge tells you instead of crashing. Forge never shipped a 1.20.5 build
+either, and NeoForge does not exist before 1.20.1.
 
-The 26.x builds need **Java 25**; the 1.21 builds need **Java 21**. On Fabric, Fabric Loader is all you
-need. No Fabric API.
+\*\* NeoForge for 1.20.1 runs the **Forge 1.20.1 jar**. There is no separate NeoForge jar for it.
+
+Minecraft 1.18 and 1.18.1 aren't supported: their world generator predates the code this mod hooks.
+
+The 26.x builds need **Java 25**; the 1.21, 1.20.5 and 1.20.6 builds need **Java 21**; 1.18.2 to 1.20.4
+need **Java 17**. On Fabric, Fabric Loader is all you need. No Fabric API.
 
 Take the jar that names **your exact Minecraft version** — these are not interchangeable. A jar built
 against 1.21.8 will not behave correctly on 1.21.5.
 
 ## Config
 
-Fabric and NeoForge: `config/farlandsreforged-common.toml`
-Forge: `config/farlandsreforged.properties`
+Fabric and Forge: `config/farlandsreforged.properties`
+NeoForge: `config/farlandsreforged-common.toml`
 
 ```toml
 enableFarlandsTerrain = true
@@ -114,11 +126,11 @@ MIT licensed. Made by Shigeo. The source is on [GitHub](https://github.com/walal
 
 ## 4) Upload the files
 
-`tools/upload_curseforge.py` does this over the API rather than by hand — 48 files is too many to click
+`tools/upload_curseforge.py` does this over the API rather than by hand — 78 files is too many to click
 through, and each one needs three tags set correctly:
 
 ```bash
-python3 tools/upload_curseforge.py build-release --version 0.4.0 \
+python3 tools/upload_curseforge.py build-release --version 0.5.0 \
     --changelog PUBLISH/GITHUB_RELEASE_NOTES.md          # dry run, uploads nothing
 python3 tools/upload_curseforge.py ... --go              # actually upload
 ```
@@ -129,27 +141,25 @@ a single jar does not resolve. It builds the multipart request itself instead of
 because `curl -F` truncates a value at the first `;` and the metadata is JSON full of them.
 
 Every file gets **Release type = Release**, no required dependencies (do **not** add Fabric API), and three
-tags: its Minecraft version, its modloader, and its Java version — **Java 21** for the 1.21 family, **Java
-25** for 26.x.
+tags: its Minecraft version, its modloader, and its Java version — **Java 17** for 1.18.2 – 1.20.4,
+**Java 21** for 1.20.5 – 1.21.11, **Java 25** for 26.x.
 
-The release is 48 files: Minecraft 1.21 … 1.21.11 on Fabric (12), NeoForge (12) and Forge (11 — Forge never
-shipped a 1.21.2), plus 26.1 / 26.1.1 / 26.1.2 / 26.2 on all three loaders and 26.3 on Fabric. There is no
-NeoForge 26.3 jar: NeoForge has no stable 26.3 yet.
+The release is 78 files: the 48 of 0.4.0 (Minecraft 1.21 … 1.21.11 and 26.x) plus 30 new ones — 1.20 … 1.20.6
+on Fabric (7), Forge (6 — no 1.20.5) and NeoForge (5 — none for 1.20, and 1.20.1 uses the Forge jar), and 1.18.2
+and 1.19 … 1.19.4 on Fabric and Forge (12). There is no NeoForge 26.3 jar: NeoForge has no stable 26.3 yet.
 
 ---
 
 ## 5) Changelog (sent with every file by the upload script)
 
 ```
-Farlands Reforged 0.4.0
+Farlands Reforged 0.5.0
 
-- Minecraft 1.21 - 1.21.11 on Fabric, NeoForge and Forge. Same Far Lands code as the 26.x builds;
-  these need Java 21.
-- The "...where am I?" advancement now works on Fabric. It never had: Fabric Loader does not expose a
-  mod's data directory as a data pack (that is Fabric API, which this mod deliberately does not need),
-  so the advancement JSON was never read and the detector quietly did nothing. Fabric builds now
-  register a built-in pack in code - still no Fabric API dependency. Forge and NeoForge were unaffected.
-- Terrain generation is unchanged: a 0.3.1 world generates identically under 0.4.0.
+- New: Minecraft 1.20 - 1.20.6 on Fabric, Forge and NeoForge; 1.19 - 1.19.4 and 1.18.2 on Fabric
+  and Forge. Same Far Lands code as every other build; the terrain matches the 1.21 and 26.x builds
+  block for block. These need Java 17 (1.20.5 and 1.20.6: Java 21).
+- Minecraft 1.18 and 1.18.1 are not supported: their world generator predates the code this mod hooks.
+- The 1.21 and 26.x builds are unchanged apart from the version number.
 ```
 
 
@@ -157,8 +167,9 @@ Farlands Reforged 0.4.0
 
 - **Distribution:** leave third-party distribution **enabled** if you want launchers/modpacks to use it.
 - **Moderation:** your first project + files go through a quick manual CurseForge review before they appear publicly.
-- **Smoke test:** every Fabric jar in this release was booted on a real Fabric server of its own Minecraft
-  version, and checked for three things: no mixin errors, `/farlands` answers, and `/datapack list` names
-  `farlandsreforged` — the last of which is the bug 0.4.0 fixes. `tools/server_test.py` does this.
+- **Smoke test:** every jar in this release was booted on a real server of its own Minecraft version and
+  loader (`tools/release_server_test.py`), and checked for four things: no mixin errors, `/farlands`
+  answers, the mod's data pack is loaded, and the Far Lands column at x = 12,550,850 is block-for-block the
+  same as every other build's.
 - **Checksums:** `SHA256SUMS.txt` (in `farlands-reforged-releases`) lists hashes for every jar if you want to
   post them for verification.

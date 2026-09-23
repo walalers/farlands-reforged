@@ -19,7 +19,7 @@ Fabric build for **Minecraft 1.19, 1.19.1 and 1.19.2**. It is
   `sendSuccess(message, false)`, which sends the same message to the same source.
 
 ```bash
-gradle build -Pminecraft_version=1.19 -Pminecraft_version_range=1.19 -Pmod_version=0.4.0+mc1.19-fabric
+gradle build -Pminecraft_version=1.19 -Pminecraft_version_range=1.19 -Pmod_version=0.5.0+mc1.19-fabric
 python scripts/verify_artifact.py
 ```
 

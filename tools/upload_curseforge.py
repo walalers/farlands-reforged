@@ -34,7 +34,7 @@ TOKEN_FILE = Path.home() / ".curseforge-token"
 LOADER_IDS = {"fabric": 7499, "neoforge": 10150, "forge": 7498}
 
 # CurseForge also tags a file with the Java it needs, under its own type id, and people filter on it.
-# The 1.21 family is Java 21; 26.x is Java 25.
+# Java 17 before 1.20.5, Java 21 through 1.21.11, Java 25 for 26.x - the same rule as server_test.java_for.
 JAVA_TYPE_ID = 2
 
 # CurseForge requires at least one tag from the "environment" group on every upload, and rejects the
@@ -46,7 +46,11 @@ ENVIRONMENTS = ("Client", "Server")
 
 
 def java_for(mc):
-    return "Java 21" if mc.startswith("1.21") else "Java 25"
+    # This used to be "1.21 or else 25", which would have tagged every 1.18.2 - 1.20.6 jar as Java 25.
+    parts = tuple(int(p) for p in mc.split("."))
+    if parts[0] != 1:
+        return "Java 25"
+    return "Java 17" if parts < (1, 20, 5) else "Java 21"
 
 
 def token():
@@ -132,6 +136,11 @@ def main():
                       and e["gameVersionTypeID"] != JAVA_TYPE_ID]
         if not candidates:
             problems.append(f"{jar.name}: CurseForge has no game version called {mc!r} yet")
+            continue
+        if len(candidates) > 1:
+            # Never guess: a wrong game-version tag is public and puts the file under the wrong version.
+            problems.append(f"{jar.name}: {mc!r} is ambiguous on CurseForge: "
+                            f"{[(e['id'], e['gameVersionTypeID']) for e in candidates]}")
             continue
 
         java_name = java_for(mc)
