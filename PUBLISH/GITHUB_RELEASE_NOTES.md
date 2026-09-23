@@ -5,7 +5,7 @@ To publish the release page:
 1. Go to **https://github.com/walalers/farlands-reforged/releases/new**, create tag `v0.5.0` on `main`.
 2. **Release title:** `Farlands Reforged 0.5.0`
 3. Paste the notes below into the description.
-4. Under **Attach binaries**, drag in the 78 `0.5.0` jars from `PUBLISH/jars/`.
+4. Under **Attach binaries**, drag in the 80 `0.5.0` jars from `PUBLISH/jars/`.
 5. **Publish release**.
 
 ---
@@ -13,7 +13,7 @@ To publish the release page:
 ## Farlands Reforged 0.5.0: back to Minecraft 1.18.2
 
 This release adds **30 new builds, covering every Minecraft version from 1.18.2 to 1.20.6**. With the
-1.21 and 26.x builds, that makes 78 jars.
+1.21 and 26.x builds, that makes 78 jars, and Forge and NeoForge 26.3 were added afterwards, so 80 in all.
 
 ### What's new
 
