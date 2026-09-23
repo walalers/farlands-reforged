@@ -15,6 +15,7 @@ Usage:
 """
 
 import argparse
+import http.client
 import json
 import mimetypes
 import re
@@ -209,6 +210,13 @@ def main():
         except urllib.error.URLError as exc:
             failed.append((item["jar"].name, str(exc)))
             print(f"[{index}/{len(plan)}] {item['jar'].name} FAILED: {exc}")
+        except (OSError, http.client.HTTPException) as exc:
+            # The connection died after the file was sent, before the reply: CurseForge may or may not
+            # have kept it. The 0.5.0 upload died this way at file 54 of 78 and took the rest of the run
+            # with it. Carry on, and flag the file - re-uploading it blindly could publish a duplicate.
+            failed.append((item["jar"].name, f"UNKNOWN, check the project before retrying: {exc!r}"))
+            print(f"[{index}/{len(plan)}] {item['jar'].name} UNKNOWN (connection lost: {exc!r}) "
+                  f"- check the project before retrying this one")
         time.sleep(2)  # be gentle; the upload API rate-limits
 
     print(f"\nuploaded {len(uploaded)}, failed {len(failed)}")
