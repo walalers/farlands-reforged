@@ -111,6 +111,12 @@ def main():
     changelog = args.changelog.read_text()
 
     versions = api_get("/game/versions", api_token)
+    # A Minecraft version name is not unique: "1.20" exists as a Minecraft version, as an "Addons" version
+    # (type 615) and under a hidden type 1. Only types whose slug is minecraft-<family> ("Minecraft 1.20",
+    # or "26.2" with slug minecraft-26-2) are Minecraft versions. Taking the first match instead would have
+    # filed the 1.20 jars under Addons 1.20, because that is the entry CurseForge happens to list first.
+    minecraft_types = {t["id"] for t in api_get("/game/version-types", api_token)
+                       if t["slug"].startswith("minecraft-") and "snapshot" not in t["slug"]}
     by_name = {}
     for entry in versions:
         by_name.setdefault(entry["name"], []).append(entry)
@@ -131,9 +137,7 @@ def main():
         if mc is None:
             problems.append(f"{jar.name}: cannot parse a Minecraft version and loader from the name")
             continue
-        # A Minecraft version can appear under more than one type id; take the Minecraft one.
-        candidates = [e for e in by_name.get(mc, []) if e["id"] not in LOADER_IDS.values()
-                      and e["gameVersionTypeID"] != JAVA_TYPE_ID]
+        candidates = [e for e in by_name.get(mc, []) if e["gameVersionTypeID"] in minecraft_types]
         if not candidates:
             problems.append(f"{jar.name}: CurseForge has no game version called {mc!r} yet")
             continue
