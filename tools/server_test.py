@@ -39,6 +39,7 @@ from hashlib import sha1
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+import farman_test  # noqa: E402
 from rcon import Rcon, RconError  # noqa: E402
 
 MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest_v2.json"
@@ -234,7 +235,7 @@ def java_for(mc):
 
 
 def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, corrupt,
-             forceload=None, settle=90, probe=None):
+             forceload=None, settle=90, probe=None, farman=False):
     workdir.mkdir(parents=True, exist_ok=True)
     (workdir / "mods").mkdir(exist_ok=True)
 
@@ -252,7 +253,7 @@ def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, c
     # command hangs forever, which looks exactly like a crash.
     (workdir / "server.properties").write_text(
         f"server-port={port}\nenable-rcon=true\nrcon.port={rcon_port}\nrcon.password={password}\n"
-        "pause-when-empty-seconds=-1\nonline-mode=false\nlevel-seed=1234\nview-distance=4\n"
+        "pause-when-empty-seconds=-1\nonline-mode=false\nwhite-list=false\nlevel-seed=1234\nview-distance=4\n"
         "simulation-distance=4\nsync-chunk-writes=false\nmax-tick-time=-1\n"
     )
 
@@ -285,6 +286,8 @@ def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, c
                     result["datapack"] = rcon.command("datapack list")
                     if probe:
                         result["column"] = probe_column(rcon, *probe)
+                    if farman:
+                        result.update(farman_test.run(rcon, mc, port, workdir, log_path))
                     if forceload:
                         # Generate a patch of the Far Lands so region_slice.py has chunks to read.
                         # forceload generates them in the background, so give it time and then flush
@@ -329,6 +332,8 @@ def main():
                     help="seconds to let forceload finish generating before saving")
     ap.add_argument("--probe", nargs=2, type=int, metavar=("X", "Z"),
                     help="read this terrain column block by block (see probe_column)")
+    ap.add_argument("--farman", action="store_true",
+                    help="put a headless player in the Far Lands and make FarMan appear (see farman_test.py)")
     ap.add_argument("--json", action="store_true", help="print the result as one JSON line")
     args = ap.parse_args()
 
@@ -339,7 +344,7 @@ def main():
 
     result = run_test(args.mc, args.jar, workdir, args.cache, args.port, args.rcon_port,
                       args.password, args.boot_timeout, args.corrupt_advancement,
-                      args.forceload, args.settle, args.probe)
+                      args.forceload, args.settle, args.probe, args.farman)
 
     if args.json:
         print(json.dumps(result))
@@ -349,6 +354,11 @@ def main():
         log(f"  pack listed : {result['pack_listed']}")
         if "column" in result:
             log(f"  column      : {summarize_column(result['column'])}")
+        if "farman" in result:
+            failing = [name for name, ok in result["farman_checks"].items() if not ok]
+            log(f"  farman      : {result['farman']}" + (f"  (failing: {', '.join(failing)})" if failing else ""))
+            for note in result["farman_notes"][:8]:
+                log(f"    {note}")
         if args.corrupt_advancement:
             log(f"  parse error : {result['parse_error']}  (must be True - proves the pack is read)")
         for error in result["errors"][:5]:
@@ -356,6 +366,7 @@ def main():
 
     ok = result["booted"] and result["command_ok"] and not result["errors"]
     ok = ok and (result["parse_error"] if args.corrupt_advancement else result["pack_listed"])
+    ok = ok and (not args.farman or result.get("farman") != "failed")
     return 0 if ok else 1
 
 

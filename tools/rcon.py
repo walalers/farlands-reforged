@@ -25,6 +25,7 @@ import sys
 LOGIN, COMMAND = 3, 2
 MAX_CHUNK = 4096  # RconClient.sendCmdResponse splits replies into packets of this many bytes
 AUTH_FAILED = -1
+FENCE_WAIT = 2.0  # seconds to wait for a reply before deciding a command was silent
 
 
 class RconError(Exception):
@@ -58,8 +59,26 @@ class Rcon:
             self.sock.close()
             self.sock = None
 
-    def command(self, text):
+    def command(self, text, fence=None):
+        """Run one command and return its reply.
+
+        Forge 1.20.6 and later send no RCON reply at all to a command that produces no output - where
+        vanilla and NeoForge send an empty one - so waiting for it hangs until the socket times out. For
+        a command that may succeed silently, pass `fence`: a command that always answers (`list`, say).
+        If nothing has come back after FENCE_WAIT seconds the fence is sent, and its reply marks the end.
+        It cannot be sent together with the command: the server reads one packet per socket read and
+        drops the connection when a second arrives in the same one.
+        """
         request_id = self._send(COMMAND, text)
+        if fence is not None and not select.select([self.sock], [], [], FENCE_WAIT)[0]:
+            fence_id = self._send(COMMAND, fence)
+            chunks = []
+            while True:
+                response_id, body = self._recv()
+                if response_id == request_id:
+                    chunks.append(body)
+                elif response_id == fence_id and self._last_body_bytes < MAX_CHUNK:
+                    return "".join(chunks)
         chunks = []
         while True:
             response_id, body = self._recv()

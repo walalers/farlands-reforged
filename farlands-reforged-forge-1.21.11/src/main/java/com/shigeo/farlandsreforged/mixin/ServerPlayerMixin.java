@@ -1,5 +1,6 @@
 package com.shigeo.farlandsreforged.mixin;
 
+import com.shigeo.farlandsreforged.FarMan;
 import com.shigeo.farlandsreforged.FarlandsEvents;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,5 +13,6 @@ public abstract class ServerPlayerMixin {
     @Inject(method = "doTick", at = @At("TAIL"))
     private void farlandsreforged$awardAdvancement(CallbackInfo ci) {
         FarlandsEvents.awardIfInFarlands((ServerPlayer) (Object) this);
+        FarMan.tick((ServerPlayer) (Object) this);
     }
 }

@@ -2,10 +2,13 @@ package com.shigeo.farlandsreforged;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.LongArgumentType;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 
 public final class FarlandsCommands {
     private FarlandsCommands() {}
@@ -19,7 +22,18 @@ public final class FarlandsCommands {
                                 .executes(commandContext -> setThreshold(commandContext.getSource(), LongArgumentType.getLong(commandContext, "threshold")))))
                 .then(Commands.literal("reset")
                         .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                        .executes(commandContext -> resetThreshold(commandContext.getSource()))));
+                        .executes(commandContext -> resetThreshold(commandContext.getSource())))
+                .then(Commands.literal("farman")
+                        .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .executes(commandContext -> showFarMan(commandContext.getSource()))
+                        .then(Commands.literal("on")
+                                .executes(commandContext -> setFarMan(commandContext.getSource(), true)))
+                        .then(Commands.literal("off")
+                                .executes(commandContext -> setFarMan(commandContext.getSource(), false)))
+                        .then(Commands.literal("summon")
+                                .executes(commandContext -> summonFarMan(commandContext.getSource(), false)))
+                        .then(Commands.literal("scare")
+                                .executes(commandContext -> summonFarMan(commandContext.getSource(), true)))));
     }
 
     private static int showInfo(CommandSourceStack source) {
@@ -32,7 +46,7 @@ public final class FarlandsCommands {
         tell(source, new TextComponent("Classic threshold: ±" + FarlandsConfig.CLASSIC_FARLANDS_START + " blocks on X/Z."));
         tell(source, new TextComponent("Configured advancement threshold: ±" + threshold + " blocks."));
         tell(source, new TextComponent("Distance to configured threshold: " + distance + " blocks."));
-        tell(source, new TextComponent("Terrain enabled: " + FarlandsConfig.terrainEnabled() + "; advancement enabled: " + FarlandsConfig.advancementEnabled() + "."));
+        tell(source, new TextComponent("Terrain enabled: " + FarlandsConfig.terrainEnabled() + "; advancement enabled: " + FarlandsConfig.advancementEnabled() + "; FarMan enabled: " + FarlandsConfig.farManEnabled() + "."));
         tell(source, new TextComponent("Inspired by AdyTech99's Farlands Reborn. Respect to the old noise ghosts."));
         return 1;
     }
@@ -54,6 +68,34 @@ public final class FarlandsCommands {
     private static int resetThreshold(CommandSourceStack source) {
         FarlandsConfig.resetFarlandsStartCoordinate();
         source.sendSuccess(new TextComponent("Farlands advancement threshold reset to the classic ±" + FarlandsConfig.CLASSIC_FARLANDS_START + " blocks."), true);
+        return 1;
+    }
+
+    private static int showFarMan(CommandSourceStack source) {
+        tell(source, new TextComponent("FarMan is " + (FarlandsConfig.farManEnabled() ? "on" : "off") + ". He only walks the Far Lands (past ±" + FarlandsConfig.farlandsStartCoordinate() + " blocks in the Overworld)."));
+        return 1;
+    }
+
+    private static int setFarMan(CommandSourceStack source, boolean enabled) {
+        FarlandsConfig.setFarManEnabled(enabled);
+        source.sendSuccess(new TextComponent(enabled ? "FarMan is on. He is waiting in the Far Lands." : "FarMan is off."), true);
+        return 1;
+    }
+
+    private static int summonFarMan(CommandSourceStack source, boolean behind) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        if (!FarlandsConfig.farManEnabled()) {
+            source.sendFailure(new TextComponent("FarMan is off. Turn him on with /farlands farman on."));
+            return 0;
+        }
+        if (player.getLevel().dimension() != Level.OVERWORLD || !FarlandsEvents.isInFarlands(player)) {
+            source.sendFailure(new TextComponent("FarMan only walks the Far Lands."));
+            return 0;
+        }
+        if (!(behind ? FarMan.scare(player) : FarMan.summon(player))) {
+            source.sendFailure(new TextComponent("FarMan found nowhere to stand. Try again somewhere more open."));
+            return 0;
+        }
         return 1;
     }
 }

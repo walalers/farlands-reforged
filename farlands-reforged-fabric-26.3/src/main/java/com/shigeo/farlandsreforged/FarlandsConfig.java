@@ -18,6 +18,7 @@ public final class FarlandsConfig {
     private static final String ENABLE_TERRAIN = "enableFarlandsTerrain";
     private static final String ENABLE_ADVANCEMENT = "enableWhereAmIAdvancement";
     private static final String FARLANDS_START = "farlandsStartCoordinate";
+    private static final String ENABLE_FARMAN = "enableFarMan";
     private static Path configPath;
     /** Cached because the terrain mixins read it inside the hottest world-generation loops. */
     private static volatile boolean terrainEnabled = true;
@@ -45,6 +46,15 @@ public final class FarlandsConfig {
         return Boolean.parseBoolean(PROPERTIES.getProperty(ENABLE_ADVANCEMENT, "true"));
     }
 
+    public static boolean farManEnabled() {
+        return Boolean.parseBoolean(PROPERTIES.getProperty(ENABLE_FARMAN, "false"));
+    }
+
+    public static void setFarManEnabled(boolean enabled) {
+        PROPERTIES.setProperty(ENABLE_FARMAN, Boolean.toString(enabled));
+        save();
+    }
+
     public static long farlandsStartCoordinate() {
         return parseLong(PROPERTIES.getProperty(FARLANDS_START), CLASSIC_FARLANDS_START);
     }
@@ -62,12 +72,14 @@ public final class FarlandsConfig {
     private static void setDefaults() {
         PROPERTIES.setProperty(ENABLE_TERRAIN, "true");
         PROPERTIES.setProperty(ENABLE_ADVANCEMENT, "true");
+        PROPERTIES.setProperty(ENABLE_FARMAN, "false");
         PROPERTIES.setProperty(FARLANDS_START, Long.toString(CLASSIC_FARLANDS_START));
     }
 
     private static void sanitize() {
         PROPERTIES.putIfAbsent(ENABLE_TERRAIN, "true");
         PROPERTIES.putIfAbsent(ENABLE_ADVANCEMENT, "true");
+        PROPERTIES.putIfAbsent(ENABLE_FARMAN, "false");
         long clamped = Math.max(MIN_START, Math.min(MAX_START, farlandsStartCoordinate()));
         PROPERTIES.setProperty(FARLANDS_START, Long.toString(clamped));
         terrainEnabled = Boolean.parseBoolean(PROPERTIES.getProperty(ENABLE_TERRAIN, "true"));
@@ -89,7 +101,7 @@ public final class FarlandsConfig {
         try {
             Files.createDirectories(configPath.getParent());
             try (OutputStream output = Files.newOutputStream(configPath)) {
-                PROPERTIES.store(output, "Farlands Reforged Fabric config. enableFarlandsTerrain toggles the authentic Far Lands; the threshold only controls /farlands and the advancement.");
+                PROPERTIES.store(output, "Farlands Reforged Fabric config. enableFarlandsTerrain toggles the authentic Far Lands; the threshold only controls /farlands, the advancement and where FarMan walks. enableFarMan turns on the FarMan haunting (off by default).");
             }
         } catch (IOException ignored) {
             // Keep running with in-memory defaults. A config file is useful, not worth crashing the game over.

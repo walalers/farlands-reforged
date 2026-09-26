@@ -11,6 +11,7 @@ public final class FarlandsConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLE_TERRAIN;
     public static final ModConfigSpec.BooleanValue ENABLE_ADVANCEMENT;
+    public static final ModConfigSpec.BooleanValue ENABLE_FARMAN;
     public static final ModConfigSpec.LongValue FARLANDS_START_COORDINATE;
 
     static {
@@ -25,10 +26,14 @@ public final class FarlandsConfig {
                 .comment("If true, players earn the hidden Far Lands advancement when they cross the configured threshold.")
                 .define("enableWhereAmIAdvancement", true);
         FARLANDS_START_COORDINATE = builder
-                .comment("Classic Far Lands threshold used by /farlands and the advancement detector.",
+                .comment("Classic Far Lands threshold used by /farlands, the advancement detector, and where FarMan walks.",
                         "The terrain effect itself always breaks down at the classic 12,550,821 like Beta did; changing this value does not move the real Far Lands.",
                         "Classic value: 12550821")
                 .defineInRange("farlandsStartCoordinate", CLASSIC_FARLANDS_START, MIN_START, MAX_START);
+        ENABLE_FARMAN = builder
+                .comment("If true, FarMan haunts players who stay in the Far Lands: omens, distant sightings, and him standing behind you.",
+                        "He never hurts anyone; the worst he does is a scare. Off by default. Ops can also use /farlands farman on|off.")
+                .define("enableFarMan", false);
         builder.pop();
 
         SPEC = builder.build();
@@ -52,6 +57,15 @@ public final class FarlandsConfig {
 
     public static boolean advancementEnabled() {
         return safeBoolean(ENABLE_ADVANCEMENT, true);
+    }
+
+    public static boolean farManEnabled() {
+        return safeBoolean(ENABLE_FARMAN, false);
+    }
+
+    public static void setFarManEnabled(boolean enabled) {
+        ENABLE_FARMAN.set(enabled);
+        ENABLE_FARMAN.save();
     }
 
     public static long farlandsStartCoordinate() {

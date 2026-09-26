@@ -42,8 +42,12 @@ public final class FarlandsEvents {
         }
     }
 
-    private static boolean isInFarlands(ServerPlayer player) {
+    static boolean isInFarlands(ServerPlayer player) {
+        return isInFarlands(player.getX(), player.getZ());
+    }
+
+    static boolean isInFarlands(double x, double z) {
         long threshold = FarlandsConfig.farlandsStartCoordinate();
-        return Math.abs(player.getX()) >= threshold || Math.abs(player.getZ()) >= threshold;
+        return Math.abs(x) >= threshold || Math.abs(z) >= threshold;
     }
 }

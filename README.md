@@ -21,6 +21,11 @@ No new blocks, no resource pack, no fuss — just the classic terrain ghost, fai
   `/farlands set <threshold>` and `/farlands reset` require game-master permission.
 - **Config toggles** — enable/disable the terrain effect and the advancement detector.
 - **"...where am I?" advancement** — unlocks when you reach the edge of sane terrain generation.
+- **FarMan** (off by default) — the pitch-black, red-eyed figure from the Far Lands creepypastas haunts players
+  who stay out there: "FarMan joined the game", cave noises, footsteps behind you, whispers in chat, redstone
+  torches on the ledges, then him watching from a distance, and finally standing right behind you. He never
+  hurts anyone; the worst he does is a scare. Built from vanilla parts, so it still needs nothing on the client.
+  Ops turn him on with `/farlands farman on` (`off`, `summon` and `scare` too), or with `enableFarMan`.
 
 ## Supported versions
 
@@ -94,9 +99,10 @@ Generated on first launch at `config/farlandsreforged-common.toml`:
 enableFarlandsTerrain = true
 enableWhereAmIAdvancement = true
 farlandsStartCoordinate = 12550821
+enableFarMan = false
 ```
 
-`farlandsStartCoordinate` only moves the `/farlands` readout and the advancement. The terrain itself always
+`farlandsStartCoordinate` only moves the `/farlands` readout, the advancement and where FarMan walks. The terrain itself always
 breaks down where the noise overflows, like it did in Beta.
 
 ## How it works

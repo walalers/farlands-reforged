@@ -39,6 +39,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from rcon import Rcon, RconError  # noqa: E402
+import farman_test  # noqa: E402
 from server_test import (ERROR_PATTERNS, corrupt_advancement, free_port, java_for, probe_column,  # noqa: E402
                          summarize_column, vanilla_server_jar)
 
@@ -190,7 +191,7 @@ def write_hosts_file(installer, workdir):
 
 
 def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, password,
-             boot_timeout, corrupt, probe=None):
+             boot_timeout, corrupt, probe=None, farman=False):
     workdir.mkdir(parents=True, exist_ok=True)
     (workdir / "mods").mkdir(exist_ok=True)
     java = java_for(mc)
@@ -206,7 +207,7 @@ def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, p
     (workdir / "eula.txt").write_text("eula=true\n")
     (workdir / "server.properties").write_text(
         f"server-port={port}\nenable-rcon=true\nrcon.port={rcon_port}\nrcon.password={password}\n"
-        "pause-when-empty-seconds=-1\nonline-mode=false\nlevel-seed=1234\nview-distance=4\n"
+        "pause-when-empty-seconds=-1\nonline-mode=false\nwhite-list=false\nlevel-seed=1234\nview-distance=4\n"
         "simulation-distance=4\nmax-tick-time=-1\n"
     )
 
@@ -239,6 +240,8 @@ def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, p
                     result["datapack"] = rcon.command("datapack list")
                     if probe:
                         result["column"] = probe_column(rcon, *probe)
+                    if farman:
+                        result.update(farman_test.run(rcon, mc, port, workdir, log_path))
             except (OSError, RconError) as exc:
                 result["errors"].append(f"rcon: {exc}")
     finally:
@@ -282,6 +285,8 @@ def main():
     ap.add_argument("--corrupt-advancement", action="store_true")
     ap.add_argument("--probe", nargs=2, type=int, metavar=("X", "Z"),
                     help="read this terrain column block by block (see server_test.probe_column)")
+    ap.add_argument("--farman", action="store_true",
+                    help="put a headless player in the Far Lands and make FarMan appear (see farman_test.py)")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
@@ -292,7 +297,7 @@ def main():
 
     result = run_test(args.loader, args.mc, args.loader_version, args.jar, workdir, args.cache,
                       args.port, args.rcon_port, args.password, args.boot_timeout,
-                      args.corrupt_advancement, args.probe)
+                      args.corrupt_advancement, args.probe, args.farman)
 
     if args.json:
         print(json.dumps(result))
@@ -302,6 +307,11 @@ def main():
         log(f"  pack listed : {result['pack_listed']}   ({result['datapack'][:90].strip()})")
         if "column" in result:
             log(f"  column      : {summarize_column(result['column'])}")
+        if "farman" in result:
+            failing = [name for name, ok in result["farman_checks"].items() if not ok]
+            log(f"  farman      : {result['farman']}" + (f"  (failing: {', '.join(failing)})" if failing else ""))
+            for note in result["farman_notes"][:8]:
+                log(f"    {note}")
         if args.corrupt_advancement:
             log(f"  parse error : {result['parse_error']}  (must be True)")
         for error in result["errors"][:5]:
@@ -309,6 +319,7 @@ def main():
 
     ok = result["booted"] and result["command_ok"] and not result["errors"]
     ok = ok and (result["parse_error"] if args.corrupt_advancement else result["pack_listed"])
+    ok = ok and (not args.farman or result.get("farman") != "failed")
     return 0 if ok else 1
 
 

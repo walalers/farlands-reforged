@@ -125,6 +125,27 @@ they look: `execute if loaded` arrives in 1.19.4 (before it, the probe waits for
 answering "That position is not loaded"), and `#minecraft:replaceable` in 1.20 (before it, the tag's
 members are tested by name). Either one missing used to fail every 1.19 probe on terrain that was fine.
 
+### `--farman` — FarMan, with a player in the Far Lands (`farman_test.py`, `farman_bot.cjs`)
+
+FarMan is driven from the player tick, so nothing about him runs on an empty server. `--farman` (on
+`server_test.py`, `modded_server_test.py` and `release_server_test.py`) logs a headless player in — a
+[mineflayer](https://github.com/PrismarineJS/mineflayer) bot, `farman_bot.cjs` — drops it onto the probed Far
+Lands column, and checks over RCON that:
+
+- he is off by default, and `/farlands farman on` / `off` reach the config file on disk;
+- `summon` puts up an armor stand carrying his profile (name and skin), black armor, and the marker flag. The
+  item-building code is different in almost every API era, so this is the check that matters most;
+- `scare` puts him behind the player, and when the player turns round the player is blinded (and darkened,
+  1.19+) and he is gone. The scare happens in the player tick, so this proves the tick hook runs;
+- "FarMan joined the game" reaches the player's chat unprompted within the first event window;
+- the server log has no `NoSuchMethodError` or tick exception.
+
+The bot turns its own head: a server-side `tp ... facing` is overwritten by the next rotation the bot sends.
+mineflayer lives outside the repository: `npm install --prefix ~/.cache/farlands-server-test/node mineflayer`.
+It speaks 1.18 – 26.1; for 26.2 and 26.3 a real client stands in (Loom's `runClient` from that version's
+Fabric project, joining with `--quickPlayMultiplayer`), which opens a Minecraft window for the length of the
+check. Forge servers accept the bot like any vanilla client, since the mod needs nothing on the client.
+
 ### `modded_server_test.py --loader forge|neoforge ...` — the same, for the other two loaders
 
 Forge and NeoForge servers are installed rather than launched, so they get their own script. This matters

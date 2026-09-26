@@ -94,6 +94,8 @@ def passed(result):
         # ("Failed to load datapacks, can't proceed"). The parse error naming the mod's advancement is the proof.
         return True
     ok = result["booted"] and result.get("command_ok") and not result["errors"]
+    # A FarMan run that could not happen (no bot for that Minecraft version) is reported, not failed.
+    ok = ok and result.get("farman") != "failed"
     return bool(ok and (result["parse_error"] if result["mode"] == "corrupt" else result["pack_listed"]))
 
 
@@ -110,8 +112,9 @@ def with_network_retries(run):
 
 
 class Run:
-    def __init__(self, jars, version, work, cache, results):
+    def __init__(self, jars, version, work, cache, results, farman=False):
         self.jars, self.version, self.work, self.cache, self.results = jars, version, work, cache, results
+        self.farman = farman
 
     def record(self, result):
         with lock:
@@ -121,6 +124,9 @@ class Run:
             print(f"[{result['loader']:8} {result['mc']:8} {result['mode']:7}] "
                   f"{'PASS' if passed(result) else 'FAIL'}"
                   + (f"  column: {server_test.summarize_column(column)[:70]}" if column else "")
+                  + (f"  farman: {result['farman']}" if "farman" in result else "")
+                  + ("  failing: " + ", ".join(k for k, v in result.get("farman_checks", {}).items() if not v)
+                     if result.get("farman") == "failed" else "")
                   + ("" if passed(result) else f"  {(result['errors'] or ['(no error text)'])[0][-200:]}"),
                   flush=True)
 
@@ -141,7 +147,7 @@ class Run:
             try:
                 result = with_network_retries(lambda: server_test.run_test(
                     mc, self.jar(mc, "fabric"), workdir, self.cache, port, port + 100, "farlands",
-                    300, False, probe=PROBE))
+                    300, False, probe=PROBE, farman=self.farman))
             except Exception:
                 result = {"mc": mc, "booted": False, "pack_listed": False, "parse_error": False,
                           "errors": [traceback.format_exc()[-600:]]}
@@ -162,7 +168,8 @@ class Run:
                     result = with_network_retries(lambda: modded_server_test.run_test(
                         loader, mc, loader_version, self.jar(mc, loader), workdir, self.cache, port,
                         port + 100, "farlands", 900, mode == "corrupt",
-                        probe=PROBE if mode == "normal" else None))
+                        probe=PROBE if mode == "normal" else None,
+                        farman=self.farman and mode == "normal"))
                 except Exception:
                     result = {"mc": mc, "loader_version": loader_version, "booted": False,
                               "pack_listed": False, "parse_error": False,
@@ -217,6 +224,11 @@ def main():
     ap.add_argument("--cache", type=Path, default=Path.home() / ".cache/farlands-server-test")
     ap.add_argument("--results", type=Path,
                     help="JSON-lines results file (default: <workdir>/results.jsonl)")
+    ap.add_argument("--sequential", action="store_true",
+                    help="one server at a time instead of one lane per loader side by side - for a machine "
+                         "that is also being used for something else, such as playing Minecraft")
+    ap.add_argument("--farman", action="store_true",
+                    help="also run the FarMan check on every jar, with a headless player (farman_test.py)")
     args = ap.parse_args()
 
     def wanted(loader, mc):
@@ -236,7 +248,7 @@ def main():
     args.workdir.mkdir(parents=True, exist_ok=True)
     results = args.results or args.workdir / "results.jsonl"
     results.unlink(missing_ok=True)
-    run = Run(args.jars.resolve(), args.version, args.workdir, args.cache, results)
+    run = Run(args.jars.resolve(), args.version, args.workdir, args.cache, results, args.farman)
 
     for mc in sorted({mc for _, mc in expected}):
         with_network_retries(lambda: server_test.vanilla_server_jar(mc, args.cache))
@@ -247,6 +259,8 @@ def main():
              threading.Thread(target=run.modded_lane, args=("neoforge", neoforge))]
     for lane in lanes:
         lane.start()
+        if args.sequential:
+            lane.join()
     for lane in lanes:
         lane.join()
 
