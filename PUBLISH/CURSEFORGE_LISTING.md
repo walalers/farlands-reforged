@@ -121,10 +121,6 @@ enableFarMan = false
 
 `farlandsStartX` and `farlandsStartZ` move where the Far Lands start, anywhere from 1 up to the classic 12,550,821. They can only come closer, not go further out. The start snaps to the nearest multiple of 4 blocks from the classic line (at most 3 blocks further out) so the wall lands exactly on it. Chunks you've already explored keep their terrain; only new ones change. The advancement, `/farlands` and FarMan all follow the new start.
 
-## Credits
-
-Big thanks to AdyTech99, whose MIT-licensed **Farlands Reborn** had the original idea of undoing the noise wrap.
-
 MIT licensed. Made by Shigeo. The source is on [GitHub](https://github.com/walalers/farlands-reforged).
 
 ---
