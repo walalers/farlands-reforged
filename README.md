@@ -224,6 +224,10 @@ the dependency version ranges, and `mod_version`), then rebuild.
 
 ## Changelog
 
+- **0.6.0** — **FarMan**, an opt-in Far Lands haunting from the creepypastas (off by default, server-side only,
+  never harmful), on every build. And **choose where the Far Lands start**: `farlandsStartX` / `farlandsStartZ`
+  bring the real terrain closer on each axis, requested on CurseForge; they replace `farlandsStartCoordinate`.
+  With default settings the terrain is identical to 0.5.0.
 - **0.5.0** — Minecraft **1.18.2 … 1.20.6**: 1.20.x on Fabric, Forge and NeoForge, 1.19.x and 1.18.2 on
   Fabric and Forge. The Far Lands are the same code, and the terrain matches the 1.21 and 26.x builds block for
   block. Minecraft 1.18 and 1.18.1 are not supported: their world generator predates the one this mod hooks.

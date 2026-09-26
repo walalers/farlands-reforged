@@ -1,39 +1,50 @@
-# GitHub Release v0.5.0 — paste-ready
+# GitHub Release v0.6.0 — paste-ready
 
 To publish the release page:
 
-1. Go to **https://github.com/walalers/farlands-reforged/releases/new**, create tag `v0.5.0` on `main`.
-2. **Release title:** `Farlands Reforged 0.5.0`
+1. Go to **https://github.com/walalers/farlands-reforged/releases/new**, create tag `v0.6.0` on `main`.
+2. **Release title:** `Farlands Reforged 0.6.0`
 3. Paste the notes below into the description.
-4. Under **Attach binaries**, drag in the 80 `0.5.0` jars from `PUBLISH/jars/`.
+4. Under **Attach binaries**, drag in the 80 `0.6.0` jars from `PUBLISH/jars/`.
 5. **Publish release**.
 
 ---
 
-## Farlands Reforged 0.5.0: back to Minecraft 1.18.2
+## Farlands Reforged 0.6.0: FarMan, and Far Lands wherever you want them
 
-This release adds **30 new builds, covering every Minecraft version from 1.18.2 to 1.20.6**. With the
-1.21 and 26.x builds, that makes 78 jars, and Forge and NeoForge 26.3 were added afterwards, so 80 in all.
+Two new features, on all 80 builds (Minecraft 1.18.2 to 26.3, Fabric, Forge and NeoForge).
 
-### What's new
+### FarMan (off by default)
 
-- **Minecraft 1.20 to 1.20.6** on Fabric, Forge and NeoForge (where NeoForge exists).
-- **Minecraft 1.19 to 1.19.4** on Fabric and Forge.
-- **Minecraft 1.18.2** on Fabric and Forge.
+The pitch-black, red-eyed figure from the old Far Lands creepypastas. Turn him on and he haunts anyone who
+stays out in the Far Lands: first "FarMan joined the game", then cave noises, footsteps behind you, whispers
+in chat and redstone torches on the ledges, then him standing far off, watching. Then right behind you.
+Walk up to him or stare too long and he's gone. He never hurts anyone: the worst he does is a scare.
 
-The Far Lands are the same code as in every other build. Each new jar was run on a real server, and the
-terrain at x = 12,550,850 came out identical, block for block, to the 1.21 and 26.x builds on the same seed.
-The "...where am I?" advancement and `/farlands` work on every version, including Fabric without Fabric API.
+- Turn him on with `/farlands farman on` (operators), or `enableFarMan = true` in the config.
+  `/farlands farman summon` and `/farlands farman scare` call him right now.
+- Built from vanilla parts, so the mod is still **server-side only**: players need nothing installed to see him.
+- He only walks the Overworld Far Lands, and nothing about him is saved to your world.
 
-### Not supported: 1.18 and 1.18.1
+### Choose where the Far Lands start
 
-Minecraft rewrote its terrain generator between 1.18.1 and 1.18.2. The code this mod hooks to make the
-Far Lands doesn't exist in 1.18 or 1.18.1, so 1.18.2 is the oldest version it runs on.
+Requested on CurseForge. Don't want to travel 12.5 million blocks? `farlandsStartX` and `farlandsStartZ`
+(or `/farlands set x|z <distance>`) bring the Far Lands closer on each axis, and the real terrain moves with
+them: the same wall, the same stacked sheets, the same flooded tunnels, just starting where you said.
+
+- Anywhere from 1 up to the classic 12,550,821. They can only come closer, not go further out.
+- The start snaps outwards by at most 3 blocks, onto the 4-block grid the terrain noise is sampled on, so the
+  wall stands exactly on it.
+- Chunks that already exist keep their terrain; only newly generated ones change.
+- `/farlands`, the advancement and FarMan all follow the new start.
+- **Config change:** these replace `farlandsStartCoordinate`, which only ever moved the `/farlands` readout and
+  the advancement. It no longer does anything; if you had changed it, set `farlandsStartX` and
+  `farlandsStartZ` instead (they move the terrain too).
 
 ### Unchanged
 
-Nothing changed in the 1.21 and 26.x builds except the version number. If you are on one of those
-versions, 0.4.0 and 0.5.0 behave identically, and terrain generation is the same.
+With the default settings the Far Lands generate exactly as in 0.5.0, block for block: all 80 jars were run
+on real servers of their own version and loader, and the terrain came out identical.
 
 ### Supported versions
 
