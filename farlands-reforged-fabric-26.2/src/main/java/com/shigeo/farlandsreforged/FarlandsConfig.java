@@ -12,12 +12,16 @@ import java.util.Properties;
 public final class FarlandsConfig {
     public static final long CLASSIC_FARLANDS_START = 12_550_821L;
     public static final long MIN_START = 1L;
-    public static final long MAX_START = 30_000_000L;
+    /** The Far Lands can only be brought closer: past the classic start the noise has already overflowed. */
+    public static final long MAX_START = CLASSIC_FARLANDS_START;
 
     private static final Properties PROPERTIES = new Properties();
     private static final String ENABLE_TERRAIN = "enableFarlandsTerrain";
     private static final String ENABLE_ADVANCEMENT = "enableWhereAmIAdvancement";
-    private static final String FARLANDS_START = "farlandsStartCoordinate";
+    private static final String FARLANDS_START_X = "farlandsStartX";
+    private static final String FARLANDS_START_Z = "farlandsStartZ";
+    /** Before 0.6.0 this moved only /farlands and the advancement; the terrain start replaced it. */
+    private static final String LEGACY_FARLANDS_START = "farlandsStartCoordinate";
     private static final String ENABLE_FARMAN = "enableFarMan";
     private static Path configPath;
     /** Cached because the terrain mixins read it inside the hottest world-generation loops. */
@@ -55,33 +59,42 @@ public final class FarlandsConfig {
         save();
     }
 
-    public static long farlandsStartCoordinate() {
-        return parseLong(PROPERTIES.getProperty(FARLANDS_START), CLASSIC_FARLANDS_START);
+    public static long farlandsStartX() {
+        return parseLong(PROPERTIES.getProperty(FARLANDS_START_X), CLASSIC_FARLANDS_START);
     }
 
-    public static void setFarlandsStartCoordinate(long coordinate) {
-        long clamped = Math.max(MIN_START, Math.min(MAX_START, coordinate));
-        PROPERTIES.setProperty(FARLANDS_START, Long.toString(clamped));
+    public static long farlandsStartZ() {
+        return parseLong(PROPERTIES.getProperty(FARLANDS_START_Z), CLASSIC_FARLANDS_START);
+    }
+
+    /** Moves where the Far Lands start. Chunks that already exist keep their terrain. */
+    public static void setFarlandsStart(long x, long z) {
+        PROPERTIES.setProperty(FARLANDS_START_X, Long.toString(clampStart(x)));
+        PROPERTIES.setProperty(FARLANDS_START_Z, Long.toString(clampStart(z)));
+        FarlandsRegion.setStart(farlandsStartX(), farlandsStartZ());
         save();
     }
 
-    public static void resetFarlandsStartCoordinate() {
-        setFarlandsStartCoordinate(CLASSIC_FARLANDS_START);
+    private static long clampStart(long start) {
+        return Math.max(MIN_START, Math.min(MAX_START, start));
     }
 
     private static void setDefaults() {
         PROPERTIES.setProperty(ENABLE_TERRAIN, "true");
         PROPERTIES.setProperty(ENABLE_ADVANCEMENT, "true");
         PROPERTIES.setProperty(ENABLE_FARMAN, "false");
-        PROPERTIES.setProperty(FARLANDS_START, Long.toString(CLASSIC_FARLANDS_START));
+        PROPERTIES.setProperty(FARLANDS_START_X, Long.toString(CLASSIC_FARLANDS_START));
+        PROPERTIES.setProperty(FARLANDS_START_Z, Long.toString(CLASSIC_FARLANDS_START));
     }
 
     private static void sanitize() {
         PROPERTIES.putIfAbsent(ENABLE_TERRAIN, "true");
         PROPERTIES.putIfAbsent(ENABLE_ADVANCEMENT, "true");
         PROPERTIES.putIfAbsent(ENABLE_FARMAN, "false");
-        long clamped = Math.max(MIN_START, Math.min(MAX_START, farlandsStartCoordinate()));
-        PROPERTIES.setProperty(FARLANDS_START, Long.toString(clamped));
+        PROPERTIES.remove(LEGACY_FARLANDS_START);
+        PROPERTIES.setProperty(FARLANDS_START_X, Long.toString(clampStart(farlandsStartX())));
+        PROPERTIES.setProperty(FARLANDS_START_Z, Long.toString(clampStart(farlandsStartZ())));
+        FarlandsRegion.setStart(farlandsStartX(), farlandsStartZ());
         terrainEnabled = Boolean.parseBoolean(PROPERTIES.getProperty(ENABLE_TERRAIN, "true"));
         save();
     }
@@ -101,7 +114,7 @@ public final class FarlandsConfig {
         try {
             Files.createDirectories(configPath.getParent());
             try (OutputStream output = Files.newOutputStream(configPath)) {
-                PROPERTIES.store(output, "Farlands Reforged Fabric config. enableFarlandsTerrain toggles the authentic Far Lands; the threshold only controls /farlands, the advancement and where FarMan walks. enableFarMan turns on the FarMan haunting (off by default).");
+                PROPERTIES.store(output, "Farlands Reforged Fabric config. enableFarlandsTerrain toggles the authentic Far Lands. farlandsStartX and farlandsStartZ move where they start, from 1 up to the classic 12550821 (chunks that already exist keep their terrain). enableFarMan turns on the FarMan haunting (off by default).");
             }
         } catch (IOException ignored) {
             // Keep running with in-memory defaults. A config file is useful, not worth crashing the game over.

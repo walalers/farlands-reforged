@@ -163,13 +163,15 @@ def chunk_loaded(rcon, x, z):
 
 def probe_column(rcon, x, z, y_min=-64, y_max=319, load_timeout=300):
     """Read one column of generated terrain over RCON, top down, as a string with one character per
-    block: '.' air, '~' water or lava, ',' a plant or other replaceable block, '#' anything solid.
+    block: '.' air, '~' water or lava, ',' a plant, tree or other replaceable block, '#' anything solid.
 
     This proves the terrain half of the mod on the shipped jar, which the other checks cannot: a
     worldgen mixin that silently fails to apply leaves a server that boots, answers `/farlands` and
     lists the pack perfectly. Only vanilla commands are used, so it works the same on every loader.
     Plants get their own class because two Minecraft versions on one seed disagree about seagrass
-    and flowers, but never about where the walls are.
+    and flowers, but never about where the walls are. Trees (logs and leaves) count as plants too: they
+    depend on the biome, and whether a neighbouring tree has reached into the column depends on which
+    chunks happened to generate first.
     """
     rcon.command(f"forceload add {x} {z}")
     deadline = time.time() + load_timeout
@@ -185,6 +187,7 @@ def probe_column(rcon, x, z, y_min=-64, y_max=319, load_timeout=300):
     # #minecraft:replaceable itself only exists from 1.20. Before that, test its members by name.
     if "Unknown block tag" in rcon.command(f"execute if block {x} 0 {z} #minecraft:replaceable"):
         tests = tests[:-1] + tuple((",", f"minecraft:{name}") for name in REPLACEABLE_BEFORE_1_20)
+    tests += ((",", "#minecraft:logs"), (",", "#minecraft:leaves"))
     column = []
     for y in range(y_max, y_min - 1, -1):
         for char, test in tests:
@@ -198,6 +201,24 @@ def probe_column(rcon, x, z, y_min=-64, y_max=319, load_timeout=300):
         else:
             column.append("#")
     return "".join(column)
+
+
+CLASSIC_START = 12_550_821
+
+
+def moved_start(rcon, start_x, start_z):
+    """Move where the Far Lands start, then read the column 29 blocks past the new wall on X.
+
+    The mod snaps a start out to the 4-block noise grid the classic one sits on, so the wall is at
+    start + (classic - start) mod 4, and the column 29 blocks beyond it reads the same legacy noise as the
+    classic probe at 12,550,850. Its upper half - the wall and the stacked sheets - must match that probe.
+    The lower half also depends on the local continent and depth noise, so it differs from place to place.
+    """
+    replies = [rcon.command(f"farlands set x {start_x}"), rcon.command(f"farlands set z {start_z}")]
+    wall = start_x + (CLASSIC_START - start_x) % 4
+    column = probe_column(rcon, wall + 29, 0)
+    rcon.command("farlands reset")
+    return {"start_replies": replies, "moved_probe": [wall + 29, 0], "moved_column": column}
 
 
 def summarize_column(column, y_max=319):
@@ -235,7 +256,7 @@ def java_for(mc):
 
 
 def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, corrupt,
-             forceload=None, settle=90, probe=None, farman=False):
+             forceload=None, settle=90, probe=None, farman=False, start=None):
     workdir.mkdir(parents=True, exist_ok=True)
     (workdir / "mods").mkdir(exist_ok=True)
 
@@ -286,6 +307,8 @@ def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, c
                     result["datapack"] = rcon.command("datapack list")
                     if probe:
                         result["column"] = probe_column(rcon, *probe)
+                    if start:
+                        result.update(moved_start(rcon, *start))
                     if farman:
                         result.update(farman_test.run(rcon, mc, port, workdir, log_path))
                     if forceload:
@@ -332,6 +355,8 @@ def main():
                     help="seconds to let forceload finish generating before saving")
     ap.add_argument("--probe", nargs=2, type=int, metavar=("X", "Z"),
                     help="read this terrain column block by block (see probe_column)")
+    ap.add_argument("--start", nargs=2, type=int, metavar=("X", "Z"),
+                    help="after the probe, move where the Far Lands start (/farlands set x|z) and probe just past it too")
     ap.add_argument("--farman", action="store_true",
                     help="put a headless player in the Far Lands and make FarMan appear (see farman_test.py)")
     ap.add_argument("--json", action="store_true", help="print the result as one JSON line")
@@ -344,7 +369,7 @@ def main():
 
     result = run_test(args.mc, args.jar, workdir, args.cache, args.port, args.rcon_port,
                       args.password, args.boot_timeout, args.corrupt_advancement,
-                      args.forceload, args.settle, args.probe, args.farman)
+                      args.forceload, args.settle, args.probe, args.farman, args.start)
 
     if args.json:
         print(json.dumps(result))

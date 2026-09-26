@@ -23,15 +23,69 @@ public final class FarlandsRegion {
 
     private FarlandsRegion() {}
 
-    /** True if a column is at or beyond the classic Far Lands threshold on the X or Z axis. */
+    /**
+     * Where the Far Lands start on each axis: the classic value, unless the config brings them closer. Cached here
+     * because the terrain mixins read them inside the hottest world-generation loops.
+     */
+    private static volatile int startX = CLASSIC_FARLANDS_START;
+    private static volatile int startZ = CLASSIC_FARLANDS_START;
+
+    /**
+     * Sets where the Far Lands start. The legacy noise is sampled every 4 blocks, on a grid the classic start sits
+     * on, so each value is moved out (by at most 3 blocks) to the next point on that grid. The wall then stands
+     * exactly on the start, as it does at the classic one, and the seam checks below match it.
+     */
+    public static void setStart(long x, long z) {
+        startX = onNoiseGrid(x);
+        startZ = onNoiseGrid(z);
+    }
+
+    public static int startX() {
+        return startX;
+    }
+
+    public static int startZ() {
+        return startZ;
+    }
+
+    private static int onNoiseGrid(long start) {
+        long clamped = Math.max(1L, Math.min(CLASSIC_FARLANDS_START, start));
+        return (int) (clamped + Math.floorMod(CLASSIC_FARLANDS_START - clamped, 4L));
+    }
+
+    /** True if a column is at or beyond the Far Lands start on the X or Z axis. */
     public static boolean isInFarlands(int blockX, int blockZ) {
-        return blockX >= CLASSIC_FARLANDS_START || blockX <= -CLASSIC_FARLANDS_START
-                || blockZ >= CLASSIC_FARLANDS_START || blockZ <= -CLASSIC_FARLANDS_START;
+        int x = startX;
+        int z = startZ;
+        return blockX >= x || blockX <= -x || blockZ >= z || blockZ <= -z;
     }
 
     /** True if a column sits on the first block of the Far Lands (used to let fluids settle at the seam). */
     public static boolean isOnFarlandsSeam(int blockX, int blockZ) {
-        return Math.abs(blockX) == CLASSIC_FARLANDS_START || Math.abs(blockZ) == CLASSIC_FARLANDS_START;
+        return Math.abs(blockX) == startX || Math.abs(blockZ) == startZ;
+    }
+
+    /**
+     * The X coordinate the legacy terrain noise is read at for a block. Up to the start it is the block's own; past
+     * it, the noise is read as if the column stood {@code CLASSIC_FARLANDS_START - start} blocks further out, so it
+     * overflows - the Far Lands wall - at the configured start instead of the classic one. The jump in the noise
+     * falls on the wall itself, where Beta's terrain broke off anyway. At the classic start this is the identity.
+     */
+    public static int noiseX(int blockX) {
+        return shift(blockX, startX);
+    }
+
+    /** The Z counterpart of {@link #noiseX}. */
+    public static int noiseZ(int blockZ) {
+        return shift(blockZ, startZ);
+    }
+
+    private static int shift(int block, int start) {
+        int offset = CLASSIC_FARLANDS_START - start;
+        if (offset == 0 || (block < start && block > -start)) {
+            return block;
+        }
+        return block >= start ? block + offset : block - offset;
     }
 
     /** True if a density value is so large it must have come from an overflowed noise sample. */

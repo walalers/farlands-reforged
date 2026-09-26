@@ -45,6 +45,11 @@ import server_test  # noqa: E402
 # The Far Lands column every jar is probed at. On seed 1234 it holds solid layers up to y=222;
 # vanilla has plain ocean there, so a worldgen mixin that silently failed to apply cannot pass.
 PROBE = (12550850, 0)
+# With --moved-start: the Far Lands are moved in to this start on both axes (/farlands set), and the column just past
+# the new wall is read too. Its upper half has to match the classic probe's; see server_test.moved_start.
+MOVED_START = (1_000_000, 1_000_000)
+# The part of a column set by the legacy noise alone. Below it the local continent and depth noise also count.
+UPPER_FROM_Y = 97
 
 FABRIC = ["1.18.2", "1.19", "1.19.1", "1.19.2", "1.19.3", "1.19.4", "1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6", "1.21", "1.21.1", "1.21.2",
           "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11", "26.1",
@@ -94,9 +99,22 @@ def passed(result):
         # ("Failed to load datapacks, can't proceed"). The parse error naming the mod's advancement is the proof.
         return True
     ok = result["booted"] and result.get("command_ok") and not result["errors"]
+    if "moved_column" in result:
+        ok = ok and moved_matches(result)
     # A FarMan run that could not happen (no bot for that Minecraft version) is reported, not failed.
     ok = ok and result.get("farman") != "failed"
     return bool(ok and (result["parse_error"] if result["mode"] == "corrupt" else result["pack_listed"]))
+
+
+def upper(column):
+    """The part of a probed column (listed from y=319 down) at or above UPPER_FROM_Y, plants read as air: what
+    grows on top depends on the biome, which differs from place to place."""
+    return column[:319 - UPPER_FROM_Y + 1].replace(",", ".")
+
+
+def moved_matches(result):
+    """The moved Far Lands' wall and sheets are the classic ones: the same legacy noise, read further in."""
+    return bool(result.get("column")) and upper(result["moved_column"]) == upper(result["column"])
 
 
 def with_network_retries(run):
@@ -112,9 +130,10 @@ def with_network_retries(run):
 
 
 class Run:
-    def __init__(self, jars, version, work, cache, results, farman=False):
+    def __init__(self, jars, version, work, cache, results, farman=False, moved_start=False):
         self.jars, self.version, self.work, self.cache, self.results = jars, version, work, cache, results
         self.farman = farman
+        self.start = MOVED_START if moved_start else None
 
     def record(self, result):
         with lock:
@@ -125,6 +144,7 @@ class Run:
                   f"{'PASS' if passed(result) else 'FAIL'}"
                   + (f"  column: {server_test.summarize_column(column)[:70]}" if column else "")
                   + (f"  farman: {result['farman']}" if "farman" in result else "")
+                  + (f"  moved start: {'matches' if moved_matches(result) else 'DIFFERS'}" if "moved_column" in result else "")
                   + ("  failing: " + ", ".join(k for k, v in result.get("farman_checks", {}).items() if not v)
                      if result.get("farman") == "failed" else "")
                   + ("" if passed(result) else f"  {(result['errors'] or ['(no error text)'])[0][-200:]}"),
@@ -147,7 +167,7 @@ class Run:
             try:
                 result = with_network_retries(lambda: server_test.run_test(
                     mc, self.jar(mc, "fabric"), workdir, self.cache, port, port + 100, "farlands",
-                    300, False, probe=PROBE, farman=self.farman))
+                    300, False, probe=PROBE, farman=self.farman, start=self.start))
             except Exception:
                 result = {"mc": mc, "booted": False, "pack_listed": False, "parse_error": False,
                           "errors": [traceback.format_exc()[-600:]]}
@@ -169,7 +189,8 @@ class Run:
                         loader, mc, loader_version, self.jar(mc, loader), workdir, self.cache, port,
                         port + 100, "farlands", 900, mode == "corrupt",
                         probe=PROBE if mode == "normal" else None,
-                        farman=self.farman and mode == "normal"))
+                        farman=self.farman and mode == "normal",
+                        start=self.start if mode == "normal" else None))
                 except Exception:
                     result = {"mc": mc, "loader_version": loader_version, "booted": False,
                               "pack_listed": False, "parse_error": False,
@@ -211,6 +232,10 @@ def summarize(results_path, expected):
         for column, keys in variants.items():
             print(f"    {server_test.summarize_column(column)[:90]}")
             print(f"      <- {', '.join(f'{l} {m}' for l, m in sorted(keys))}")
+    moved = [r for r in latest.values() if "moved_column" in r]
+    if moved:
+        good = sum(1 for r in moved if moved_matches(r))
+        print(f"  moved start: {good}/{len(moved)} walls at {MOVED_START[0]:,} match the classic Far Lands above y={UPPER_FROM_Y}")
     return not failed and not missing and len(variants) <= 1
 
 
@@ -229,6 +254,8 @@ def main():
                          "that is also being used for something else, such as playing Minecraft")
     ap.add_argument("--farman", action="store_true",
                     help="also run the FarMan check on every jar, with a headless player (farman_test.py)")
+    ap.add_argument("--moved-start", action="store_true",
+                    help="also move the Far Lands in to 1,000,000 and check the wall there is the classic one")
     args = ap.parse_args()
 
     def wanted(loader, mc):
@@ -248,7 +275,7 @@ def main():
     args.workdir.mkdir(parents=True, exist_ok=True)
     results = args.results or args.workdir / "results.jsonl"
     results.unlink(missing_ok=True)
-    run = Run(args.jars.resolve(), args.version, args.workdir, args.cache, results, args.farman)
+    run = Run(args.jars.resolve(), args.version, args.workdir, args.cache, results, args.farman, args.moved_start)
 
     for mc in sorted({mc for _, mc in expected}):
         with_network_retries(lambda: server_test.vanilla_server_jar(mc, args.cache))

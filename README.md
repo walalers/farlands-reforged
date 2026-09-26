@@ -17,8 +17,11 @@ No new blocks, no resource pack, no fuss — just the classic terrain ghost, fai
 - **Beta-style dressing** — grass and trees on top, grass and dirt on every ledge inside, and the tunnels flooded
   up to sea level, just like the originals.
 - **Classic by default** — normal terrain everywhere else is untouched, and nothing glitches early.
-- **`/farlands` command** — shows the Far Lands threshold and your distance from it, plus credits.
-  `/farlands set <threshold>` and `/farlands reset` require game-master permission.
+- **Move the Far Lands closer** — `farlandsStartX` and `farlandsStartZ` set where they start on each axis, from
+  the classic ±12,550,821 in to wherever you like. The terrain really moves: the wall, the stacked sheets and the
+  flooded tunnels all begin there, and the advancement and FarMan follow.
+- **`/farlands` command** — shows where the Far Lands start and your distance from them, plus credits.
+  `/farlands set <start>`, `/farlands set x|z <start>` and `/farlands reset` require game-master permission.
 - **Config toggles** — enable/disable the terrain effect and the advancement detector.
 - **"...where am I?" advancement** — unlocks when you reach the edge of sane terrain generation.
 - **FarMan** (off by default) — the pitch-black, red-eyed figure from the Far Lands creepypastas haunts players
@@ -98,12 +101,16 @@ Generated on first launch at `config/farlandsreforged-common.toml`:
 ```toml
 enableFarlandsTerrain = true
 enableWhereAmIAdvancement = true
-farlandsStartCoordinate = 12550821
+farlandsStartX = 12550821
+farlandsStartZ = 12550821
 enableFarMan = false
 ```
 
-`farlandsStartCoordinate` only moves the `/farlands` readout, the advancement and where FarMan walks. The terrain itself always
-breaks down where the noise overflows, like it did in Beta.
+`farlandsStartX` and `farlandsStartZ` move where the Far Lands start, on each axis, anywhere from 1 up to the
+classic 12,550,821 (they cannot be pushed further out: past that the noise has already overflowed). The start
+snaps out to the next multiple of 4 blocks from the classic line, at most 3 blocks, so the wall stands exactly on
+it. Only chunks generated afterwards change; the ones that already exist keep their terrain. These replace
+`farlandsStartCoordinate`, which only ever moved the advancement and `/farlands`.
 
 ## How it works
 

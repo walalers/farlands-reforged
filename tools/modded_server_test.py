@@ -40,7 +40,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from rcon import Rcon, RconError  # noqa: E402
 import farman_test  # noqa: E402
-from server_test import (ERROR_PATTERNS, corrupt_advancement, free_port, java_for, probe_column,  # noqa: E402
+from server_test import (ERROR_PATTERNS, corrupt_advancement, free_port, java_for, moved_start, probe_column,  # noqa: E402
                          summarize_column, vanilla_server_jar)
 
 FORGE_MAVEN = "https://maven.minecraftforge.net/net/minecraftforge/forge"
@@ -191,7 +191,7 @@ def write_hosts_file(installer, workdir):
 
 
 def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, password,
-             boot_timeout, corrupt, probe=None, farman=False):
+             boot_timeout, corrupt, probe=None, farman=False, start=None):
     workdir.mkdir(parents=True, exist_ok=True)
     (workdir / "mods").mkdir(exist_ok=True)
     java = java_for(mc)
@@ -240,6 +240,8 @@ def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, p
                     result["datapack"] = rcon.command("datapack list")
                     if probe:
                         result["column"] = probe_column(rcon, *probe)
+                    if start:
+                        result.update(moved_start(rcon, *start))
                     if farman:
                         result.update(farman_test.run(rcon, mc, port, workdir, log_path))
             except (OSError, RconError) as exc:
@@ -285,6 +287,8 @@ def main():
     ap.add_argument("--corrupt-advancement", action="store_true")
     ap.add_argument("--probe", nargs=2, type=int, metavar=("X", "Z"),
                     help="read this terrain column block by block (see server_test.probe_column)")
+    ap.add_argument("--start", nargs=2, type=int, metavar=("X", "Z"),
+                    help="after the probe, move where the Far Lands start (/farlands set x|z) and probe just past it too")
     ap.add_argument("--farman", action="store_true",
                     help="put a headless player in the Far Lands and make FarMan appear (see farman_test.py)")
     ap.add_argument("--json", action="store_true")
@@ -297,7 +301,7 @@ def main():
 
     result = run_test(args.loader, args.mc, args.loader_version, args.jar, workdir, args.cache,
                       args.port, args.rcon_port, args.password, args.boot_timeout,
-                      args.corrupt_advancement, args.probe, args.farman)
+                      args.corrupt_advancement, args.probe, args.farman, args.start)
 
     if args.json:
         print(json.dumps(result))

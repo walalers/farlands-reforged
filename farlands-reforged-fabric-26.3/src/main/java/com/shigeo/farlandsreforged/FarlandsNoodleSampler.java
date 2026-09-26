@@ -26,7 +26,7 @@ public record FarlandsNoodleSampler(DensitySampler vanilla) implements DensitySa
         }
         long farX = Math.max(Math.abs((long) volume.minBlockX()), Math.abs((long) volume.maxBlockX()));
         long farZ = Math.max(Math.abs((long) volume.minBlockZ()), Math.abs((long) volume.maxBlockZ()));
-        if (farX < FarlandsRegion.CLASSIC_FARLANDS_START && farZ < FarlandsRegion.CLASSIC_FARLANDS_START) {
+        if (farX < FarlandsRegion.startX() && farZ < FarlandsRegion.startZ()) {
             return;
         }
         for (int iz = 0; iz < volume.sizeZ(); iz++) {

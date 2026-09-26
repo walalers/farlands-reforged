@@ -40,8 +40,10 @@ There are no new blocks and you don't need a resource pack. The rest of your wor
 - Mountains and caves stay normal until you reach the right distance. Nothing starts glitching early.
 - Modern noodle caves don't cut through the Far Lands, so the walls stay solid. Regular caves are still there.
 - Arriving doesn't freeze your server. All that water doesn't turn into a flood of block updates.
-- `/farlands` tells you where the Far Lands start and how far away you are. Operators also get `/farlands set <threshold>` and `/farlands reset`.
+- Don't want to travel 12.5 million blocks? Bring the Far Lands closer. `farlandsStartX` and `farlandsStartZ` in the config (or `/farlands set x|z <distance>`) move where they start on each axis, and the real terrain moves with them: the same wall, the same sheets, the same flooded tunnels.
+- `/farlands` tells you where the Far Lands start and how far away you are. Operators also get `/farlands set <distance>`, `/farlands set x|z <distance>` and `/farlands reset`.
 - A hidden advancement, "...where am I?", for making it out there.
+- **FarMan**, if you dare (off by default). The pitch-black figure from the old Far Lands creepypastas haunts anyone who stays out there too long: "FarMan joined the game", cave noises, footsteps behind you, whispers in chat, redstone torches on the ledges... then him, watching from far away. Then behind you. He never hurts you. Turn him on with `/farlands farman on` or `enableFarMan = true`. Still server-side only: he's made of vanilla parts.
 - Config options to turn off the terrain or the advancement.
 
 ## Getting there
@@ -112,10 +114,12 @@ against 1.21.8 will not behave correctly on 1.21.5.
 ```toml
 enableFarlandsTerrain = true
 enableWhereAmIAdvancement = true
-farlandsStartCoordinate = 12550821
+farlandsStartX = 12550821
+farlandsStartZ = 12550821
+enableFarMan = false
 ```
 
-`farlandsStartCoordinate` only moves the `/farlands` readout and the advancement. The terrain always breaks at the real spot, same as in Beta.
+`farlandsStartX` and `farlandsStartZ` move where the Far Lands start, anywhere from 1 up to the classic 12,550,821. They can only come closer, not go further out. The start snaps to the nearest multiple of 4 blocks from the classic line (at most 3 blocks further out) so the wall lands exactly on it. Chunks you've already explored keep their terrain; only new ones change. The advancement, `/farlands` and FarMan all follow the new start.
 
 ## Credits
 

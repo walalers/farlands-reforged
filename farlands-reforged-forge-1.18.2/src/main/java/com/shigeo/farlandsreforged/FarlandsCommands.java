@@ -19,11 +19,17 @@ public final class FarlandsCommands {
             .executes(context -> showInfo(context.getSource()))
             .then(Commands.literal("set")
                 .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                .then(Commands.argument("threshold", LongArgumentType.longArg(FarlandsConfig.MIN_START, FarlandsConfig.MAX_START))
-                    .executes(context -> setThreshold(context.getSource(), LongArgumentType.getLong(context, "threshold")))))
+                .then(Commands.argument("start", LongArgumentType.longArg(FarlandsConfig.MIN_START, FarlandsConfig.MAX_START))
+                    .executes(context -> setStart(context.getSource(), LongArgumentType.getLong(context, "start"), true, true)))
+                .then(Commands.literal("x")
+                    .then(Commands.argument("start", LongArgumentType.longArg(FarlandsConfig.MIN_START, FarlandsConfig.MAX_START))
+                        .executes(context -> setStart(context.getSource(), LongArgumentType.getLong(context, "start"), true, false))))
+                .then(Commands.literal("z")
+                    .then(Commands.argument("start", LongArgumentType.longArg(FarlandsConfig.MIN_START, FarlandsConfig.MAX_START))
+                        .executes(context -> setStart(context.getSource(), LongArgumentType.getLong(context, "start"), false, true)))))
             .then(Commands.literal("reset")
                 .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                .executes(context -> resetThreshold(context.getSource())))
+                .executes(context -> resetStart(context.getSource())))
             .then(Commands.literal("farman")
                 .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .executes(context -> showFarMan(context.getSource()))
@@ -38,15 +44,15 @@ public final class FarlandsCommands {
     }
 
     private static int showInfo(CommandSourceStack source) {
-        long threshold = FarlandsConfig.farlandsStartCoordinate();
+        int startX = FarlandsRegion.startX();
+        int startZ = FarlandsRegion.startZ();
         double x = Math.abs(source.getPosition().x());
         double z = Math.abs(source.getPosition().z());
-        long distance = Math.max(0L, (long) Math.ceil(threshold - Math.max(x, z)));
+        long distance = Math.max(0L, (long) Math.ceil(Math.min(startX - x, startZ - z)));
 
         tell(source, new TextComponent("Farlands Reforged restores classic Far Lands-style terrain generation."));
-        tell(source, new TextComponent("Classic threshold: ±12550821 blocks on X/Z."));
-        tell(source, new TextComponent("Configured advancement threshold: ±" + threshold + " blocks."));
-        tell(source, new TextComponent("Distance to configured threshold: " + distance + " blocks."));
+        tell(source, new TextComponent("The Far Lands start at ±" + startX + " on X and ±" + startZ + " on Z (classic: ±" + FarlandsConfig.CLASSIC_FARLANDS_START + ")."));
+        tell(source, new TextComponent("Distance to the Far Lands: " + distance + " blocks."));
         tell(source, new TextComponent("Terrain enabled: " + FarlandsConfig.terrainEnabled() + "; advancement enabled: " + FarlandsConfig.advancementEnabled() + "; FarMan enabled: " + FarlandsConfig.farManEnabled() + "."));
         tell(source, new TextComponent("Inspired by AdyTech99's Farlands Reborn. Respect to the old noise ghosts."));
         return 1;
@@ -60,20 +66,20 @@ public final class FarlandsCommands {
         source.sendSuccess(message, false);
     }
 
-    private static int setThreshold(CommandSourceStack source, long threshold) {
-        FarlandsConfig.setFarlandsStartCoordinate(threshold);
-        source.sendSuccess(new TextComponent("Farlands advancement threshold set to ±" + threshold + " blocks."), true);
+    private static int setStart(CommandSourceStack source, long start, boolean onX, boolean onZ) {
+        FarlandsConfig.setFarlandsStart(onX ? start : FarlandsConfig.farlandsStartX(), onZ ? start : FarlandsConfig.farlandsStartZ());
+        source.sendSuccess(new TextComponent("The Far Lands now start at ±" + FarlandsRegion.startX() + " on X and ±" + FarlandsRegion.startZ() + " on Z. Chunks that already exist keep their terrain."), true);
         return 1;
     }
 
-    private static int resetThreshold(CommandSourceStack source) {
-        FarlandsConfig.resetFarlandsStartCoordinate();
-        source.sendSuccess(new TextComponent("Farlands advancement threshold reset to the classic ±12550821 blocks."), true);
+    private static int resetStart(CommandSourceStack source) {
+        FarlandsConfig.setFarlandsStart(FarlandsConfig.CLASSIC_FARLANDS_START, FarlandsConfig.CLASSIC_FARLANDS_START);
+        source.sendSuccess(new TextComponent("The Far Lands start at the classic ±" + FarlandsConfig.CLASSIC_FARLANDS_START + " again. Chunks that already exist keep their terrain."), true);
         return 1;
     }
 
     private static int showFarMan(CommandSourceStack source) {
-        tell(source, new TextComponent("FarMan is " + (FarlandsConfig.farManEnabled() ? "on" : "off") + ". He only walks the Far Lands (past ±" + FarlandsConfig.farlandsStartCoordinate() + " blocks in the Overworld)."));
+        tell(source, new TextComponent("FarMan is " + (FarlandsConfig.farManEnabled() ? "on" : "off") + ". He only walks the Far Lands (past ±" + FarlandsRegion.startX() + " on X or ±" + FarlandsRegion.startZ() + " on Z, in the Overworld)."));
         return 1;
     }
 

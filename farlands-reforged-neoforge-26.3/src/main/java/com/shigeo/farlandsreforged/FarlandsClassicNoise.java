@@ -159,24 +159,28 @@ public final class FarlandsClassicNoise {
     public record Sampler(DensitySampler vanilla, FarlandsClassicNoise classic) implements DensitySampler {
         @Override
         public float sampleValue(SamplerContext context, int x, int y, int z) {
-            if (!FarlandsConfig.terrainEnabled() || !beyondWrap(x, z)) {
+            // Past a configured start the noise is read further out; see FarlandsRegion.noiseX.
+            int noiseX = FarlandsRegion.noiseX(x);
+            int noiseZ = FarlandsRegion.noiseZ(z);
+            if (!FarlandsConfig.terrainEnabled() || !beyondWrap(noiseX, noiseZ)) {
                 return this.vanilla.sampleValue(context, x, y, z);
             }
-            return toFloat(this.classic.compute(x, y, z));
+            return toFloat(this.classic.compute(noiseX, y, noiseZ));
         }
 
         @Override
         public void sampleVolume(SamplerContext context, DensityBuffer buffer, DensityVolume volume) {
             long farX = Math.max(Math.abs((long) volume.minBlockX()), Math.abs((long) volume.maxBlockX()));
             long farZ = Math.max(Math.abs((long) volume.minBlockZ()), Math.abs((long) volume.maxBlockZ()));
-            if (!FarlandsConfig.terrainEnabled() || !beyondWrap(farX, farZ)) {
+            boolean shifted = farX >= FarlandsRegion.startX() || farZ >= FarlandsRegion.startZ();
+            if (!FarlandsConfig.terrainEnabled() || (!beyondWrap(farX, farZ) && !shifted)) {
                 this.vanilla.sampleVolume(context, buffer, volume);
                 return;
             }
             for (int iz = 0; iz < volume.sizeZ(); iz++) {
-                int blockZ = volume.blockZ(iz);
+                int blockZ = FarlandsRegion.noiseZ(volume.blockZ(iz));
                 for (int ix = 0; ix < volume.sizeX(); ix++) {
-                    int blockX = volume.blockX(ix);
+                    int blockX = FarlandsRegion.noiseX(volume.blockX(ix));
                     for (int iy = 0; iy < volume.sizeY(); iy++) {
                         buffer.set(volume.indexUnchecked(ix, iy, iz), toFloat(this.classic.compute(blockX, volume.blockY(iy), blockZ)));
                     }

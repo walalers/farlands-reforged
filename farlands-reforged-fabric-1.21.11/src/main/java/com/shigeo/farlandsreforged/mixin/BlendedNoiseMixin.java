@@ -1,6 +1,8 @@
 package com.shigeo.farlandsreforged.mixin;
 
 import com.shigeo.farlandsreforged.FarlandsConfig;
+import com.shigeo.farlandsreforged.FarlandsRegion;
+import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.synth.BlendedNoise;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,5 +24,28 @@ public abstract class BlendedNoiseMixin {
     )
     private static double farlandsreforged$keepFullPrecision(double coordinate) {
         return FarlandsConfig.terrainEnabled() ? coordinate : PerlinNoise.wrap(coordinate);
+    }
+
+    /**
+     * Reads the legacy noise at the shifted column when the Far Lands are configured to start closer than the
+     * classic threshold, so the overflow that makes them lands on the configured start. See
+     * {@link FarlandsRegion#noiseX}; at the classic start it changes nothing.
+     */
+    @Redirect(
+            method = "compute(Lnet/minecraft/world/level/levelgen/DensityFunction$FunctionContext;)D",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/DensityFunction$FunctionContext;blockX()I")
+    )
+    private int farlandsreforged$shiftX(DensityFunction.FunctionContext context) {
+        int blockX = context.blockX();
+        return FarlandsConfig.terrainEnabled() ? FarlandsRegion.noiseX(blockX) : blockX;
+    }
+
+    @Redirect(
+            method = "compute(Lnet/minecraft/world/level/levelgen/DensityFunction$FunctionContext;)D",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/DensityFunction$FunctionContext;blockZ()I")
+    )
+    private int farlandsreforged$shiftZ(DensityFunction.FunctionContext context) {
+        int blockZ = context.blockZ();
+        return FarlandsConfig.terrainEnabled() ? FarlandsRegion.noiseZ(blockZ) : blockZ;
     }
 }

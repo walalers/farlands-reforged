@@ -46,7 +46,6 @@ public final class FarlandsEvents {
     }
 
     static boolean isInFarlands(double x, double z) {
-        long threshold = FarlandsConfig.farlandsStartCoordinate();
-        return Math.abs(x) >= threshold || Math.abs(z) >= threshold;
+        return Math.abs(x) >= FarlandsRegion.startX() || Math.abs(z) >= FarlandsRegion.startZ();
     }
 }
