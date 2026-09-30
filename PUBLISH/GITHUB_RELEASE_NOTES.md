@@ -1,50 +1,37 @@
-# GitHub Release v0.6.0 — paste-ready
+# GitHub Release v0.7.0 — paste-ready
 
 To publish the release page:
 
-1. Go to **https://github.com/walalers/farlands-reforged/releases/new**, create tag `v0.6.0` on `main`.
-2. **Release title:** `Farlands Reforged 0.6.0`
+1. Go to **https://github.com/walalers/farlands-reforged/releases/new**, create tag `v0.7.0` on `main`.
+2. **Release title:** `Farlands Reforged 0.7.0`
 3. Paste the notes below into the description.
-4. Under **Attach binaries**, drag in the 80 `0.6.0` jars from `PUBLISH/jars/`.
+4. Under **Attach binaries**, drag in the 80 `0.7.0` jars from `PUBLISH/jars/`.
 5. **Publish release**.
 
 ---
 
-## Farlands Reforged 0.6.0: FarMan, and Far Lands wherever you want them
+## Farlands Reforged 0.7.0: Far Lands at the edge of the world
 
-Two new features, on all 80 builds (Minecraft 1.18.2 to 26.3, Fabric, Forge and NeoForge).
+One new feature, on all 80 builds (Minecraft 1.18.2 to 26.3, Fabric, Forge and NeoForge).
 
-### FarMan (off by default)
+### Push the Far Lands further out
 
-The pitch-black, red-eyed figure from the old Far Lands creepypastas. Turn him on and he haunts anyone who
-stays out in the Far Lands: first "FarMan joined the game", then cave noises, footsteps behind you, whispers
-in chat and redstone torches on the ledges, then him standing far off, watching. Then right behind you.
-Walk up to him or stare too long and he's gone. He never hurts anyone: the worst he does is a scare.
+Requested on CurseForge. In 0.6.0, `farlandsStartX` and `farlandsStartZ` could only bring the Far Lands
+closer. Now they also push them further out, anywhere up to 30,000,000, the edge of the world.
 
-- Turn him on with `/farlands farman on` (operators), or `enableFarMan = true` in the config.
-  `/farlands farman summon` and `/farlands farman scare` call him right now.
-- Built from vanilla parts, so the mod is still **server-side only**: players need nothing installed to see him.
-- He only walks the Overworld Far Lands, and nothing about him is saved to your world.
-
-### Choose where the Far Lands start
-
-Requested on CurseForge. Don't want to travel 12.5 million blocks? `farlandsStartX` and `farlandsStartZ`
-(or `/farlands set x|z <distance>`) bring the Far Lands closer on each axis, and the real terrain moves with
-them: the same wall, the same stacked sheets, the same flooded tunnels, just starting where you said.
-
-- Anywhere from 1 up to the classic 12,550,821. They can only come closer, not go further out.
-- The start snaps outwards by at most 3 blocks, onto the 4-block grid the terrain noise is sampled on, so the
-  wall stands exactly on it.
-- Chunks that already exist keep their terrain; only newly generated ones change.
-- `/farlands`, the advancement and FarMan all follow the new start.
-- **Config change:** these replace `farlandsStartCoordinate`, which only ever moved the `/farlands` readout and
-  the advancement. It no longer does anything; if you had changed it, set `farlandsStartX` and
-  `farlandsStartZ` instead (they move the terrain too).
+- The land between the classic 12,550,821 and your start is plain vanilla terrain, block for block. The real
+  Far Lands (the wall, the stacked sheets, the flooded tunnels) begin exactly at the start.
+- The world border stands at 29,999,984. Set a start just past it, say `/farlands set 29999985`, and the Far
+  Lands stand behind the border: you can see them but not reach them.
+- As before, the start snaps outwards by at most 3 blocks onto the 4-block grid the terrain noise is sampled
+  on, only newly generated chunks change, and `/farlands`, the advancement and FarMan all follow it.
 
 ### Unchanged
 
-With the default settings the Far Lands generate exactly as in 0.5.0, block for block: all 80 jars were run
-on real servers of their own version and loader, and the terrain came out identical.
+With the default settings the Far Lands generate exactly as in 0.6.0, block for block. All 80 jars ran on
+real servers of their own version and loader: the classic Far Lands column came out identical on every one,
+the walls at a start of 1,000,000 and of 20,000,000 match the classic wall, and with a start of 20,000,000
+the land at the classic corner is the vanilla terrain.
 
 ### Supported versions
 

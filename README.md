@@ -230,6 +230,9 @@ the dependency version ranges, and `mod_version`), then rebuild.
 
 ## Changelog
 
+- **0.7.0** — The Far Lands can now start **further out** than the classic ±12,550,821, as far as the edge of
+  the world at ±30,000,000 (behind the world border if you like), requested on CurseForge. The land up to the new
+  start is vanilla terrain. With default settings the terrain is identical to 0.6.0.
 - **0.6.0** — **FarMan**, an opt-in Far Lands haunting from the creepypastas (off by default, server-side only,
   never harmful), on every build. And **choose where the Far Lands start**: `farlandsStartX` / `farlandsStartZ`
   bring the real terrain closer on each axis, requested on CurseForge; they replace `farlandsStartCoordinate`.
