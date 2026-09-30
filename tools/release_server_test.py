@@ -48,6 +48,11 @@ PROBE = (12550850, 0)
 # With --moved-start: the Far Lands are moved in to this start on both axes (/farlands set), and the column just past
 # the new wall is read too. Its upper half has to match the classic probe's; see server_test.moved_start.
 MOVED_START = (1_000_000, 1_000_000)
+# With --far-start: the Far Lands are moved out to this start instead. The wall there must match the classic one too,
+# and the column past the classic corner must be plain vanilla terrain: the Fabric jar of the same Minecraft version
+# with enableFarlandsTerrain=false, read once and cached in <cache>/vanilla-columns.json.
+FAR_START = (20_000_000, 20_000_000)
+VANILLA_COLUMNS = {}
 # The part of a column set by the legacy noise alone. Below it the local continent and depth noise also count.
 UPPER_FROM_Y = 97
 
@@ -101,6 +106,8 @@ def passed(result):
     ok = result["booted"] and result.get("command_ok") and not result["errors"]
     if "moved_column" in result:
         ok = ok and moved_matches(result)
+    if "far_column" in result:
+        ok = ok and moved_matches(result, "far") and inside_matches(result)
     # A FarMan run that could not happen (no bot for that Minecraft version) is reported, not failed.
     ok = ok and result.get("farman") != "failed"
     return bool(ok and (result["parse_error"] if result["mode"] == "corrupt" else result["pack_listed"]))
@@ -112,9 +119,43 @@ def upper(column):
     return column[:319 - UPPER_FROM_Y + 1].replace(",", ".")
 
 
-def moved_matches(result):
-    """The moved Far Lands' wall and sheets are the classic ones: the same legacy noise, read further in."""
-    return bool(result.get("column")) and upper(result["moved_column"]) == upper(result["column"])
+def moved_matches(result, key="moved"):
+    """The moved Far Lands' wall and sheets are the classic ones: the same legacy noise, read further in (or out)."""
+    return bool(result.get("column")) and upper(result[f"{key}_column"]) == upper(result["column"])
+
+
+def inside_matches(result):
+    """Short of a far start, past the classic corner, the terrain is vanilla's (plants read as air, as in upper)."""
+    reference = VANILLA_COLUMNS.get(vanilla_key(result["mc"], result.get("inside_probe", [])))
+    column = result.get("inside_column")
+    return bool(reference and column) and column.replace(",", ".") == reference.replace(",", ".")
+
+
+def vanilla_key(mc, probe):
+    return f"{mc} {' '.join(map(str, probe))}"
+
+
+def load_vanilla_columns(cache, versions, jar_for, work):
+    """Read (once per Minecraft version, then from the cache) the vanilla column a far start's inside probe must match."""
+    path = cache / "vanilla-columns.json"
+    if path.exists():
+        VANILLA_COLUMNS.update(json.loads(path.read_text()))
+    probe = [server_test.CLASSIC_START + 29, server_test.CLASSIC_START + 29]
+    for mc in versions:
+        key = vanilla_key(mc, probe)
+        if key in VANILLA_COLUMNS:
+            continue
+        workdir = work / f"vanilla-{mc}"
+        shutil.rmtree(workdir, ignore_errors=True)
+        result = with_network_retries(lambda: server_test.run_test(
+            mc, jar_for(mc), workdir, cache, PORTS["fabric"], PORTS["fabric"] + 100, "farlands", 300, False,
+            probe=probe, vanilla_terrain=True))
+        if not result.get("column") or "Terrain enabled: false" not in result["farlands"]:
+            sys.exit(f"could not read the vanilla reference column for {mc}: {result['errors'][:2]}")
+        VANILLA_COLUMNS[key] = result["column"]
+        path.write_text(json.dumps(VANILLA_COLUMNS, indent=1, sort_keys=True))
+        log(f"vanilla reference {mc}: {server_test.summarize_column(result['column'])[:90]}")
+        shutil.rmtree(workdir, ignore_errors=True)
 
 
 def with_network_retries(run):
@@ -130,10 +171,11 @@ def with_network_retries(run):
 
 
 class Run:
-    def __init__(self, jars, version, work, cache, results, farman=False, moved_start=False):
+    def __init__(self, jars, version, work, cache, results, farman=False, moved_start=False, far_start=False):
         self.jars, self.version, self.work, self.cache, self.results = jars, version, work, cache, results
         self.farman = farman
         self.start = MOVED_START if moved_start else None
+        self.far_start = FAR_START if far_start else None
 
     def record(self, result):
         with lock:
@@ -145,6 +187,8 @@ class Run:
                   + (f"  column: {server_test.summarize_column(column)[:70]}" if column else "")
                   + (f"  farman: {result['farman']}" if "farman" in result else "")
                   + (f"  moved start: {'matches' if moved_matches(result) else 'DIFFERS'}" if "moved_column" in result else "")
+                  + (f"  far start: wall {'matches' if moved_matches(result, 'far') else 'DIFFERS'}, inside "
+                     f"{'vanilla' if inside_matches(result) else 'NOT VANILLA'}" if "far_column" in result else "")
                   + ("  failing: " + ", ".join(k for k, v in result.get("farman_checks", {}).items() if not v)
                      if result.get("farman") == "failed" else "")
                   + ("" if passed(result) else f"  {(result['errors'] or ['(no error text)'])[0][-200:]}"),
@@ -167,7 +211,7 @@ class Run:
             try:
                 result = with_network_retries(lambda: server_test.run_test(
                     mc, self.jar(mc, "fabric"), workdir, self.cache, port, port + 100, "farlands",
-                    300, False, probe=PROBE, farman=self.farman, start=self.start))
+                    300, False, probe=PROBE, farman=self.farman, start=self.start, far_start=self.far_start))
             except Exception:
                 result = {"mc": mc, "booted": False, "pack_listed": False, "parse_error": False,
                           "errors": [traceback.format_exc()[-600:]]}
@@ -190,7 +234,8 @@ class Run:
                         port + 100, "farlands", 900, mode == "corrupt",
                         probe=PROBE if mode == "normal" else None,
                         farman=self.farman and mode == "normal",
-                        start=self.start if mode == "normal" else None))
+                        start=self.start if mode == "normal" else None,
+                        far_start=self.far_start if mode == "normal" else None))
                 except Exception:
                     result = {"mc": mc, "loader_version": loader_version, "booted": False,
                               "pack_listed": False, "parse_error": False,
@@ -236,6 +281,12 @@ def summarize(results_path, expected):
     if moved:
         good = sum(1 for r in moved if moved_matches(r))
         print(f"  moved start: {good}/{len(moved)} walls at {MOVED_START[0]:,} match the classic Far Lands above y={UPPER_FROM_Y}")
+    far = [r for r in latest.values() if "far_column" in r]
+    if far:
+        walls = sum(1 for r in far if moved_matches(r, "far"))
+        inside = sum(1 for r in far if inside_matches(r))
+        print(f"  far start: {walls}/{len(far)} walls at {FAR_START[0]:,} match the classic Far Lands above y={UPPER_FROM_Y}; "
+              f"{inside}/{len(far)} columns past the classic corner are vanilla")
     return not failed and not missing and len(variants) <= 1
 
 
@@ -256,6 +307,9 @@ def main():
                     help="also run the FarMan check on every jar, with a headless player (farman_test.py)")
     ap.add_argument("--moved-start", action="store_true",
                     help="also move the Far Lands in to 1,000,000 and check the wall there is the classic one")
+    ap.add_argument("--far-start", action="store_true",
+                    help="also move them out to 20,000,000: the wall there must be the classic one, and the terrain "
+                         "past the classic corner vanilla (reference columns are read once per version and cached)")
     args = ap.parse_args()
 
     def wanted(loader, mc):
@@ -275,10 +329,14 @@ def main():
     args.workdir.mkdir(parents=True, exist_ok=True)
     results = args.results or args.workdir / "results.jsonl"
     results.unlink(missing_ok=True)
-    run = Run(args.jars.resolve(), args.version, args.workdir, args.cache, results, args.farman, args.moved_start)
+    run = Run(args.jars.resolve(), args.version, args.workdir, args.cache, results, args.farman, args.moved_start,
+              args.far_start)
 
     for mc in sorted({mc for _, mc in expected}):
         with_network_retries(lambda: server_test.vanilla_server_jar(mc, args.cache))
+    if args.far_start:
+        load_vanilla_columns(args.cache, sorted({mc for _, mc in expected}), lambda mc: run.jar(mc, "fabric"),
+                             args.workdir)
     log(f"testing {len(expected)} jars; results in {results}")
 
     lanes = [threading.Thread(target=run.fabric_lane, args=(fabric,)),

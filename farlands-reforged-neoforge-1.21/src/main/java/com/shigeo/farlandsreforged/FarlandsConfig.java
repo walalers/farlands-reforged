@@ -6,8 +6,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class FarlandsConfig {
     public static final long CLASSIC_FARLANDS_START = 12_550_821L;
     public static final long MIN_START = 1L;
-    /** The Far Lands can only be brought closer: past the classic start the noise has already overflowed. */
-    public static final long MAX_START = CLASSIC_FARLANDS_START;
+    /** The edge of the world: the Far Lands can start anywhere from 1 up to it, closer or further than the classic start. */
+    public static final long MAX_START = FarlandsRegion.MAX_FARLANDS_START;
 
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLE_TERRAIN;
@@ -29,8 +29,8 @@ public final class FarlandsConfig {
                 .define("enableWhereAmIAdvancement", true);
         FARLANDS_START_X = builder
                 .comment("Where the Far Lands start on the X axis, in blocks from the centre of the world (both directions).",
-                        "The classic, Beta 1.7.3 value is 12550821, which is also the furthest out they can start. Any value from 1 up",
-                        "brings them closer. Chunks that already exist keep their terrain. /farlands, the advancement and FarMan follow it too.")
+                        "The classic, Beta 1.7.3 value is 12550821. Any value from 1 up to 30000000 (the edge of the world) moves them closer or",
+                        "further out. Chunks that already exist keep their terrain. /farlands, the advancement and FarMan follow it too.")
                 .defineInRange("farlandsStartX", CLASSIC_FARLANDS_START, MIN_START, MAX_START);
         FARLANDS_START_Z = builder
                 .comment("Where the Far Lands start on the Z axis. Same rules as farlandsStartX.")

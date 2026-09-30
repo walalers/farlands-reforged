@@ -56,28 +56,42 @@ public final class FarlandsClassicNoise {
         this.main = octaves(fbm.mainNoise(), -7, 12.75);
     }
 
-    /** True once vanilla's coordinate wrap can differ from the classic, unwrapped noise. */
-    public static boolean beyondWrap(long blockX, long blockZ) {
-        return Math.abs(blockX) >= WRAP_FREE_LIMIT || Math.abs(blockZ) >= WRAP_FREE_LIMIT;
+    /**
+     * True if vanilla's sampler gives the right noise on one axis for every block out to {@code far} (the largest
+     * distance from the origin among them): short of the start, where the wrap is either kept (a start beyond the
+     * classic one, see {@link FarlandsRegion#keepsWrapX}) or does not change anything yet.
+     */
+    private static boolean vanillaAxis(long far, int start) {
+        return far < start && (start > FarlandsRegion.CLASSIC_FARLANDS_START || far < WRAP_FREE_LIMIT);
     }
 
-    /** Same result as 26.2's {@code BlendedNoise.compute} with every {@code PerlinNoise.wrap} call removed. */
-    public double compute(int blockX, int blockY, int blockZ) {
+    /**
+     * Same result as 26.2's {@code BlendedNoise.compute} with the {@code PerlinNoise.wrap} calls removed, except on an
+     * axis that keeps its wrap.
+     */
+    public double compute(int blockX, int blockY, int blockZ, boolean wrapX, boolean wrapZ) {
         double x = blockX;
         double y = blockY;
         double z = blockZ;
-        double alpha = stack(this.main, x * this.mainXzScale, y * this.mainYScale, z * this.mainXzScale) + 0.5;
-        double min = alpha < 1.0 ? stack(this.minLimit, x * this.xzMultiplier, y * this.yMultiplier, z * this.xzMultiplier) : 0.0;
-        double max = alpha > 0.0 ? stack(this.maxLimit, x * this.xzMultiplier, y * this.yMultiplier, z * this.xzMultiplier) : 0.0;
+        double alpha = stack(this.main, x * this.mainXzScale, y * this.mainYScale, z * this.mainXzScale, wrapX, wrapZ) + 0.5;
+        double min = alpha < 1.0 ? stack(this.minLimit, x * this.xzMultiplier, y * this.yMultiplier, z * this.xzMultiplier, wrapX, wrapZ) : 0.0;
+        double max = alpha > 0.0 ? stack(this.maxLimit, x * this.xzMultiplier, y * this.yMultiplier, z * this.xzMultiplier, wrapX, wrapZ) : 0.0;
         return Mth.clampedLerp(alpha, min, max);
     }
 
-    private static double stack(Octave[] octaves, double x, double y, double z) {
+    private static double stack(Octave[] octaves, double x, double y, double z, boolean wrapX, boolean wrapZ) {
         double total = 0.0;
         for (Octave octave : octaves) {
-            total += octave.amplitude * octave.sample(x * octave.frequency, y * octave.frequency, z * octave.frequency);
+            double ox = x * octave.frequency;
+            double oz = z * octave.frequency;
+            total += octave.amplitude * octave.sample(wrapX ? wrap(ox) : ox, y * octave.frequency, wrapZ ? wrap(oz) : oz);
         }
         return total;
+    }
+
+    /** 26.2's {@code PerlinNoise.wrap}: seamless, since 2^25 is a multiple of the 256-entry permutation table. */
+    private static double wrap(double coordinate) {
+        return coordinate - (double) Mth.lfloor(coordinate / 3.3554432E7 + 0.5) * 3.3554432E7;
     }
 
     /** Mirrors {@code BlendedNoise.createFbm}: layer 0 is full frequency, each later layer halves it and doubles the amplitude. */
@@ -159,30 +173,34 @@ public final class FarlandsClassicNoise {
     public record Sampler(DensitySampler vanilla, FarlandsClassicNoise classic) implements DensitySampler {
         @Override
         public float sampleValue(SamplerContext context, int x, int y, int z) {
-            // Past a configured start the noise is read further out; see FarlandsRegion.noiseX.
-            int noiseX = FarlandsRegion.noiseX(x);
-            int noiseZ = FarlandsRegion.noiseZ(z);
-            if (!FarlandsConfig.terrainEnabled() || !beyondWrap(noiseX, noiseZ)) {
+            if (!FarlandsConfig.terrainEnabled()
+                    || (vanillaAxis(Math.abs((long) x), FarlandsRegion.startX()) && vanillaAxis(Math.abs((long) z), FarlandsRegion.startZ()))) {
                 return this.vanilla.sampleValue(context, x, y, z);
             }
-            return toFloat(this.classic.compute(noiseX, y, noiseZ));
+            // Past a configured start the noise is read further out (or in); see FarlandsRegion.noiseX.
+            return toFloat(this.classic.compute(FarlandsRegion.noiseX(x), y, FarlandsRegion.noiseZ(z),
+                    FarlandsRegion.keepsWrapX(x), FarlandsRegion.keepsWrapZ(z)));
         }
 
         @Override
         public void sampleVolume(SamplerContext context, DensityBuffer buffer, DensityVolume volume) {
             long farX = Math.max(Math.abs((long) volume.minBlockX()), Math.abs((long) volume.maxBlockX()));
             long farZ = Math.max(Math.abs((long) volume.minBlockZ()), Math.abs((long) volume.maxBlockZ()));
-            boolean shifted = farX >= FarlandsRegion.startX() || farZ >= FarlandsRegion.startZ();
-            if (!FarlandsConfig.terrainEnabled() || (!beyondWrap(farX, farZ) && !shifted)) {
+            if (!FarlandsConfig.terrainEnabled()
+                    || (vanillaAxis(farX, FarlandsRegion.startX()) && vanillaAxis(farZ, FarlandsRegion.startZ()))) {
                 this.vanilla.sampleVolume(context, buffer, volume);
                 return;
             }
             for (int iz = 0; iz < volume.sizeZ(); iz++) {
-                int blockZ = FarlandsRegion.noiseZ(volume.blockZ(iz));
+                int blockZ = volume.blockZ(iz);
+                int noiseZ = FarlandsRegion.noiseZ(blockZ);
+                boolean wrapZ = FarlandsRegion.keepsWrapZ(blockZ);
                 for (int ix = 0; ix < volume.sizeX(); ix++) {
-                    int blockX = FarlandsRegion.noiseX(volume.blockX(ix));
+                    int blockX = volume.blockX(ix);
+                    int noiseX = FarlandsRegion.noiseX(blockX);
+                    boolean wrapX = FarlandsRegion.keepsWrapX(blockX);
                     for (int iy = 0; iy < volume.sizeY(); iy++) {
-                        buffer.set(volume.indexUnchecked(ix, iy, iz), toFloat(this.classic.compute(blockX, volume.blockY(iy), blockZ)));
+                        buffer.set(volume.indexUnchecked(ix, iy, iz), toFloat(this.classic.compute(noiseX, volume.blockY(iy), noiseZ, wrapX, wrapZ)));
                     }
                 }
             }

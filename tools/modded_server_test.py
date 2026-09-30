@@ -191,7 +191,7 @@ def write_hosts_file(installer, workdir):
 
 
 def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, password,
-             boot_timeout, corrupt, probe=None, farman=False, start=None):
+             boot_timeout, corrupt, probe=None, farman=False, start=None, far_start=None):
     workdir.mkdir(parents=True, exist_ok=True)
     (workdir / "mods").mkdir(exist_ok=True)
     java = java_for(mc)
@@ -242,6 +242,8 @@ def run_test(loader, mc, loader_version, jar, workdir, cache, port, rcon_port, p
                         result["column"] = probe_column(rcon, *probe)
                     if start:
                         result.update(moved_start(rcon, *start))
+                    if far_start:
+                        result.update(moved_start(rcon, *far_start, key="far"))
                     if farman:
                         result.update(farman_test.run(rcon, mc, port, workdir, log_path))
             except (OSError, RconError) as exc:
@@ -289,6 +291,8 @@ def main():
                     help="read this terrain column block by block (see server_test.probe_column)")
     ap.add_argument("--start", nargs=2, type=int, metavar=("X", "Z"),
                     help="after the probe, move where the Far Lands start (/farlands set x|z) and probe just past it too")
+    ap.add_argument("--far-start", nargs=2, type=int, metavar=("X", "Z"),
+                    help="the same with a start beyond the classic one, which also probes past the classic corner")
     ap.add_argument("--farman", action="store_true",
                     help="put a headless player in the Far Lands and make FarMan appear (see farman_test.py)")
     ap.add_argument("--json", action="store_true")
@@ -301,7 +305,8 @@ def main():
 
     result = run_test(args.loader, args.mc, args.loader_version, args.jar, workdir, args.cache,
                       args.port, args.rcon_port, args.password, args.boot_timeout,
-                      args.corrupt_advancement, args.probe, args.farman, args.start)
+                      args.corrupt_advancement, args.probe, args.farman, args.start,
+                      args.far_start)
 
     if args.json:
         print(json.dumps(result))
@@ -311,6 +316,9 @@ def main():
         log(f"  pack listed : {result['pack_listed']}   ({result['datapack'][:90].strip()})")
         if "column" in result:
             log(f"  column      : {summarize_column(result['column'])}")
+        for key in ("moved_column", "far_column", "inside_column"):
+            if key in result:
+                log(f"  {key.split('_')[0] + ' ' + str(result[key.replace('column', 'probe')]):<12}: {summarize_column(result[key])}")
         if "farman" in result:
             failing = [name for name, ok in result["farman_checks"].items() if not ok]
             log(f"  farman      : {result['farman']}" + (f"  (failing: {', '.join(failing)})" if failing else ""))

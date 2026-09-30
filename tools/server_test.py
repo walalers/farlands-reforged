@@ -188,6 +188,11 @@ def probe_column(rcon, x, z, y_min=-64, y_max=319, load_timeout=300):
     if "Unknown block tag" in rcon.command(f"execute if block {x} 0 {z} #minecraft:replaceable"):
         tests = tests[:-1] + tuple((",", f"minecraft:{name}") for name in REPLACEABLE_BEFORE_1_20)
     tests += ((",", "#minecraft:logs"), (",", "#minecraft:leaves"))
+    # Flowers are not replaceable, and one on top of a moved wall (an azure bluet at 20,000,030 on 1.21.4 and 26.3)
+    # once read as solid. Tags a version does not know are skipped, as #replaceable is above.
+    for tag in ("#minecraft:small_flowers", "#minecraft:tall_flowers"):
+        if "Unknown block tag" not in rcon.command(f"execute if block {x} 0 {z} {tag}"):
+            tests += ((",", tag),)
     column = []
     for y in range(y_max, y_min - 1, -1):
         for char, test in tests:
@@ -206,19 +211,27 @@ def probe_column(rcon, x, z, y_min=-64, y_max=319, load_timeout=300):
 CLASSIC_START = 12_550_821
 
 
-def moved_start(rcon, start_x, start_z):
+def moved_start(rcon, start_x, start_z, key="moved"):
     """Move where the Far Lands start, then read the column 29 blocks past the new wall on X.
 
     The mod snaps a start out to the 4-block noise grid the classic one sits on, so the wall is at
     start + (classic - start) mod 4, and the column 29 blocks beyond it reads the same legacy noise as the
     classic probe at 12,550,850. Its upper half - the wall and the stacked sheets - must match that probe.
     The lower half also depends on the local continent and depth noise, so it differs from place to place.
+    A start beyond the classic one also reads a column just past the classic wall; see below.
     """
     replies = [rcon.command(f"farlands set x {start_x}"), rcon.command(f"farlands set z {start_z}")]
     wall = start_x + (CLASSIC_START - start_x) % 4
     column = probe_column(rcon, wall + 29, 0)
+    result = {f"{key}_replies": replies, f"{key}_probe": [wall + 29, 0], f"{key}_column": column}
+    if start_x > CLASSIC_START and start_z > CLASSIC_START:
+        # With the start further out than the classic one, the classic Far Lands must be gone: the column 29 blocks
+        # past the classic corner (a chunk nothing has generated yet, and past the classic wall on both axes) has to
+        # be vanilla terrain. Compare it with a server whose config says enableFarlandsTerrain=false.
+        result["inside_probe"] = [CLASSIC_START + 29, CLASSIC_START + 29]
+        result["inside_column"] = probe_column(rcon, CLASSIC_START + 29, CLASSIC_START + 29)
     rcon.command("farlands reset")
-    return {"start_replies": replies, "moved_probe": [wall + 29, 0], "moved_column": column}
+    return result
 
 
 def summarize_column(column, y_max=319):
@@ -256,9 +269,14 @@ def java_for(mc):
 
 
 def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, corrupt,
-             forceload=None, settle=90, probe=None, farman=False, start=None):
+             forceload=None, settle=90, probe=None, farman=False, start=None, far_start=None,
+             vanilla_terrain=False):
     workdir.mkdir(parents=True, exist_ok=True)
     (workdir / "mods").mkdir(exist_ok=True)
+    if vanilla_terrain:
+        # The mod's own switch for vanilla generation: the reference that terrain short of a far start must match.
+        (workdir / "config").mkdir(exist_ok=True)
+        (workdir / "config" / "farlandsreforged.properties").write_text("enableFarlandsTerrain=false\n")
 
     server_jar = vanilla_server_jar(mc, cache)
     launcher = fabric_launcher(mc, cache)
@@ -309,6 +327,8 @@ def run_test(mc, jar, workdir, cache, port, rcon_port, password, boot_timeout, c
                         result["column"] = probe_column(rcon, *probe)
                     if start:
                         result.update(moved_start(rcon, *start))
+                    if far_start:
+                        result.update(moved_start(rcon, *far_start, key="far"))
                     if farman:
                         result.update(farman_test.run(rcon, mc, port, workdir, log_path))
                     if forceload:
@@ -357,6 +377,10 @@ def main():
                     help="read this terrain column block by block (see probe_column)")
     ap.add_argument("--start", nargs=2, type=int, metavar=("X", "Z"),
                     help="after the probe, move where the Far Lands start (/farlands set x|z) and probe just past it too")
+    ap.add_argument("--far-start", nargs=2, type=int, metavar=("X", "Z"),
+                    help="the same with a start beyond the classic one, which also probes past the classic corner")
+    ap.add_argument("--vanilla-terrain", action="store_true",
+                    help="boot with enableFarlandsTerrain=false, for a vanilla reference column")
     ap.add_argument("--farman", action="store_true",
                     help="put a headless player in the Far Lands and make FarMan appear (see farman_test.py)")
     ap.add_argument("--json", action="store_true", help="print the result as one JSON line")
@@ -369,7 +393,8 @@ def main():
 
     result = run_test(args.mc, args.jar, workdir, args.cache, args.port, args.rcon_port,
                       args.password, args.boot_timeout, args.corrupt_advancement,
-                      args.forceload, args.settle, args.probe, args.farman, args.start)
+                      args.forceload, args.settle, args.probe, args.farman, args.start, args.far_start,
+                      args.vanilla_terrain)
 
     if args.json:
         print(json.dumps(result))
@@ -379,6 +404,9 @@ def main():
         log(f"  pack listed : {result['pack_listed']}")
         if "column" in result:
             log(f"  column      : {summarize_column(result['column'])}")
+        for key in ("moved_column", "far_column", "inside_column"):
+            if key in result:
+                log(f"  {key.split('_')[0] + ' ' + str(result[key.replace('column', 'probe')]):<12}: {summarize_column(result[key])}")
         if "farman" in result:
             failing = [name for name, ok in result["farman_checks"].items() if not ok]
             log(f"  farman      : {result['farman']}" + (f"  (failing: {', '.join(failing)})" if failing else ""))

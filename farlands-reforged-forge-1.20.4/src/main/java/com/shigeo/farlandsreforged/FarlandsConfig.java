@@ -12,8 +12,8 @@ import java.util.Properties;
 public final class FarlandsConfig {
     public static final long CLASSIC_FARLANDS_START = 12_550_821L;
     public static final long MIN_START = 1L;
-    /** The Far Lands can only be brought closer: past the classic start the noise has already overflowed. */
-    public static final long MAX_START = CLASSIC_FARLANDS_START;
+    /** The edge of the world: the Far Lands can start anywhere from 1 up to it, closer or further than the classic start. */
+    public static final long MAX_START = FarlandsRegion.MAX_FARLANDS_START;
 
     private static final Properties PROPERTIES = new Properties();
     private static final String ENABLE_TERRAIN = "enableFarlandsTerrain";
@@ -117,7 +117,7 @@ public final class FarlandsConfig {
         try {
             Files.createDirectories(configPath.getParent());
             try (OutputStream output = Files.newOutputStream(configPath)) {
-                PROPERTIES.store(output, "Farlands Reforged Forge config. enableFarlandsTerrain toggles the authentic Far Lands. farlandsStartX and farlandsStartZ move where they start, from 1 up to the classic 12550821 (chunks that already exist keep their terrain). enableFarMan turns on the FarMan haunting (off by default).");
+                PROPERTIES.store(output, "Farlands Reforged Forge config. enableFarlandsTerrain toggles the authentic Far Lands. farlandsStartX and farlandsStartZ move where they start, from 1 up to 30000000 (the classic start is 12550821; chunks that already exist keep their terrain). enableFarMan turns on the FarMan haunting (off by default).");
             }
         } catch (IOException ignored) {
         }

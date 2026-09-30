@@ -17,9 +17,10 @@ No new blocks, no resource pack, no fuss — just the classic terrain ghost, fai
 - **Beta-style dressing** — grass and trees on top, grass and dirt on every ledge inside, and the tunnels flooded
   up to sea level, just like the originals.
 - **Classic by default** — normal terrain everywhere else is untouched, and nothing glitches early.
-- **Move the Far Lands closer** — `farlandsStartX` and `farlandsStartZ` set where they start on each axis, from
-  the classic ±12,550,821 in to wherever you like. The terrain really moves: the wall, the stacked sheets and the
-  flooded tunnels all begin there, and the advancement and FarMan follow.
+- **Move the Far Lands** — `farlandsStartX` and `farlandsStartZ` set where they start on each axis: closer than
+  the classic ±12,550,821, or further out, up to the edge of the world at ±30,000,000 (behind the world border if you
+  like). The terrain really moves: the wall, the stacked sheets and the flooded tunnels all begin there, and the
+  advancement and FarMan follow.
 - **`/farlands` command** — shows where the Far Lands start and your distance from them, plus credits.
   `/farlands set <start>`, `/farlands set x|z <start>` and `/farlands reset` require game-master permission.
 - **Config toggles** — enable/disable the terrain effect and the advancement detector.
@@ -106,11 +107,12 @@ farlandsStartZ = 12550821
 enableFarMan = false
 ```
 
-`farlandsStartX` and `farlandsStartZ` move where the Far Lands start, on each axis, anywhere from 1 up to the
-classic 12,550,821 (they cannot be pushed further out: past that the noise has already overflowed). The start
-snaps out to the next multiple of 4 blocks from the classic line, at most 3 blocks, so the wall stands exactly on
-it. Only chunks generated afterwards change; the ones that already exist keep their terrain. These replace
-`farlandsStartCoordinate`, which only ever moved the advancement and `/farlands`.
+`farlandsStartX` and `farlandsStartZ` move where the Far Lands start, on each axis, anywhere from 1 up to
+30,000,000, the edge of the world. Further out than the classic 12,550,821, the land up to the start is vanilla
+terrain, and the default world border stands at 29,999,984, so a start just past it leaves the Far Lands in sight
+but out of reach. The start snaps out to the next multiple of 4 blocks from the classic line, at most 3 blocks, so
+the wall stands exactly on it. Only chunks generated afterwards change; the ones that already exist keep their
+terrain. These replace `farlandsStartCoordinate`, which only ever moved the advancement and `/farlands`.
 
 ## How it works
 
@@ -141,6 +143,10 @@ Farlands Reforged does six small things to bring the original behavior back:
 6. **Keeps modern noodle caves out.** The long, thin noodle tunnels are carved straight into the final terrain
    density, so they bored through every Far Lands wall and sheet. Beta never had them; inside the Far Lands the
    noodle noise reports "no tunnel" instead. Beta-era caves (the cave carver) are still there.
+
+A different start reads the legacy noise as if each column past it stood that much further out (or in), so it
+overflows at the start; the jump falls on the wall itself. For a start beyond the classic one, the columns short of
+it keep vanilla's wrap on that axis, which is seamless and is how vanilla avoids the Far Lands in the first place.
 
 Set `enableFarlandsTerrain = false` to turn all six off and get vanilla generation.
 

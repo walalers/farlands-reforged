@@ -3,7 +3,8 @@
 
 The Java compiler never sees mixin targets, so a project can build fine and then fail at runtime with
 "@Redirect target not found". This disassembles the real classes and checks each target method exists
-and, for the two @Redirects, that the redirected INVOKE is actually inside it.
+and, for the @Redirects, that the redirected INVOKE is actually inside it - for PerlinNoise.wrap in
+BlendedNoise.compute, exactly six times, since the mixin redirects each call by ordinal (X, Y, Z twice).
 
     python verify_injections.py <named-minecraft.jar>
 """
@@ -17,6 +18,7 @@ CHECKS = {
     'net/minecraft/world/level/levelgen/synth/BlendedNoise': {
         'methods': ['double compute(net.minecraft.world.level.levelgen.DensityFunction$FunctionContext)'],
         'invokes': {'compute': ['synth/PerlinNoise.wrap:(D)D']},
+        'invoke_counts': {('compute', 'synth/PerlinNoise.wrap:(D)D'): 6},
     },
     'net/minecraft/world/level/levelgen/synth/ImprovedNoise': {
         'methods': ['double noise(double, double, double, double, double)'],
@@ -97,6 +99,13 @@ for cls, spec in CHECKS.items():
             ok = needle in body
             print(f"{'ok  ' if ok else 'FAIL'}  {cls.split('/')[-1]}#{method} invokes {needle}")
             failures += 0 if ok else 1
+    for (method, needle), expected in spec.get('invoke_counts', {}).items():
+        chunks = re.split(r'\n(?=  [\w<])', out)
+        body = '\n'.join(c for c in chunks if re.search(rf'\b{re.escape(method)}\(', c.split('\n')[0]))
+        count = body.count(needle)
+        ok = count == expected
+        print(f"{'ok  ' if ok else 'FAIL'}  {cls.split('/')[-1]}#{method} invokes {needle} {count} times (want {expected})")
+        failures += 0 if ok else 1
 
 shutil.rmtree(tmp, ignore_errors=True)
 print()

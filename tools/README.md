@@ -180,6 +180,13 @@ gets the mixin-error scan, `/farlands`, `/datapack list` and `--probe 12550850 0
 also gets the corrupted-advancement boot. At the end it prints a pass/fail per jar and checks that all
 the Far Lands columns match. All 48 jars of 0.4.0 took about 2.5 hours and came back identical.
 
+`--moved-start` also moves the Far Lands in to 1,000,000 (`/farlands set`) and reads the column 29 blocks past
+the new wall: above y=97 it must match the classic probe. `--far-start` does the same with the start moved out
+to 20,000,000, and also reads the column past the classic corner (12,550,850, 12,550,850), which must then be
+vanilla terrain, block for block (plants aside). The vanilla reference is that column on the same Minecraft
+version's Fabric jar booted with `enableFarlandsTerrain=false` (`server_test.py --vanilla-terrain`); it is read
+once per version before the lanes start and cached in `<cache>/vanilla-columns.json`.
+
 `--only neoforge` or `--only forge:1.21 fabric:26.2` reruns a subset. Vanilla server jars are
 downloaded first, one at a time, and seeded into each Forge/NeoForge install so no two installers fetch
 one at once; each install is deleted after its test, keeping only its logs; and a download that fails on

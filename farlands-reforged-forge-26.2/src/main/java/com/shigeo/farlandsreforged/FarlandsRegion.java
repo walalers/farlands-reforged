@@ -15,6 +15,12 @@ public final class FarlandsRegion {
     public static final int CLASSIC_FARLANDS_START = 12_550_821;
 
     /**
+     * The furthest out the Far Lands can be set to start: the edge of the world, where Minecraft stops letting
+     * anything be built or reached (the default world border stands 16 blocks inside it, at 29,999,984).
+     */
+    public static final int MAX_FARLANDS_START = 30_000_000;
+
+    /**
      * Vanilla's density pipeline uses -1,000,000 as "negative infinity". Any density with a magnitude at or
      * beyond this can only come from an overflowed noise sample, so it doubles as the "we are inside the Far
      * Lands" detector for density values.
@@ -24,8 +30,8 @@ public final class FarlandsRegion {
     private FarlandsRegion() {}
 
     /**
-     * Where the Far Lands start on each axis: the classic value, unless the config brings them closer. Cached here
-     * because the terrain mixins read them inside the hottest world-generation loops.
+     * Where the Far Lands start on each axis: the classic value, unless the config moves them. Cached here because
+     * the terrain mixins read them inside the hottest world-generation loops.
      */
     private static volatile int startX = CLASSIC_FARLANDS_START;
     private static volatile int startZ = CLASSIC_FARLANDS_START;
@@ -49,7 +55,7 @@ public final class FarlandsRegion {
     }
 
     private static int onNoiseGrid(long start) {
-        long clamped = Math.max(1L, Math.min(CLASSIC_FARLANDS_START, start));
+        long clamped = Math.max(1L, Math.min(MAX_FARLANDS_START, start));
         return (int) (clamped + Math.floorMod(CLASSIC_FARLANDS_START - clamped, 4L));
     }
 
@@ -67,9 +73,10 @@ public final class FarlandsRegion {
 
     /**
      * The X coordinate the legacy terrain noise is read at for a block. Up to the start it is the block's own; past
-     * it, the noise is read as if the column stood {@code CLASSIC_FARLANDS_START - start} blocks further out, so it
-     * overflows - the Far Lands wall - at the configured start instead of the classic one. The jump in the noise
-     * falls on the wall itself, where Beta's terrain broke off anyway. At the classic start this is the identity.
+     * it, the noise is read as if the column stood {@code CLASSIC_FARLANDS_START - start} blocks further out (or, for
+     * a start beyond the classic one, further in), so it overflows - the Far Lands wall - at the configured start
+     * instead of the classic one. The jump in the noise falls on the wall itself, where Beta's terrain broke off
+     * anyway. At the classic start this is the identity.
      */
     public static int noiseX(int blockX) {
         return shift(blockX, startX);
@@ -86,6 +93,35 @@ public final class FarlandsRegion {
             return block;
         }
         return block >= start ? block + offset : block - offset;
+    }
+
+    /** True if the X start is set beyond the classic one, so {@link #keepsWrapX} can be true anywhere. */
+    public static boolean startsBeyondClassicX() {
+        return startX > CLASSIC_FARLANDS_START;
+    }
+
+    /** The Z counterpart of {@link #startsBeyondClassicX}. */
+    public static boolean startsBeyondClassicZ() {
+        return startZ > CLASSIC_FARLANDS_START;
+    }
+
+    /**
+     * True if the legacy noise keeps vanilla's coordinate wrap on the X axis for this block. Unwrapped, the noise
+     * overflows at the classic start whatever the config says, so with the start set beyond it, every block short of
+     * the start keeps the wrap - which is seamless, and exactly how vanilla avoids the Far Lands - and terrain there
+     * is vanilla's. Only past the start is the wrap dropped. Always false with the start at or inside the classic one.
+     */
+    public static boolean keepsWrapX(int blockX) {
+        return keepsWrap(blockX, startX);
+    }
+
+    /** The Z counterpart of {@link #keepsWrapX}. */
+    public static boolean keepsWrapZ(int blockZ) {
+        return keepsWrap(blockZ, startZ);
+    }
+
+    private static boolean keepsWrap(int block, int start) {
+        return start > CLASSIC_FARLANDS_START && block < start && block > -start;
     }
 
     /** True if a density value is so large it must have come from an overflowed noise sample. */
